@@ -33,6 +33,7 @@
     <a href="#gallery">Gallery</a>
     <a href="#reasons">Reasons</a>
     <a href="#lines">Lines</a>
+    <a href="#blog">Blog</a>
     <a href="#letter">Letter</a>
   </nav>
   <button class="theme-btn" id="themeBtn" aria-label="Switch light or dark mode">◐</button>
@@ -126,6 +127,13 @@
     </article>
   </section>
 
+  <!-- ============ BLOG ============ -->
+  <section id="blog" class="section">
+    <p class="eyebrow center">Little stories</p>
+    <h2 class="h2">From my <span class="script">heart</span></h2>
+    <div class="blog-grid" id="blogGrid"></div>
+  </section>
+
   <section class="finale">
     <h2 class="script">Happy Birthday, Anu</h2>
     <p>January 9 is your day, so go and shine like the star you are.</p>
@@ -133,7 +141,22 @@
   </section>
 </main>
 
-<footer>made with ♡ only for Anamika “Anu” · January 9</footer>
+<footer>
+  <div class="socials" id="socials" aria-label="Social links"></div>
+  made with ♡ only for Anamika “Anu” · January 9
+</footer>
+
+<!-- ============ BLOG POST VIEWER ============ -->
+<div id="post" role="dialog" aria-modal="true" aria-label="Blog post" hidden>
+  <article class="post-card">
+    <button class="round post-x" id="postClose" aria-label="Close">×</button>
+    <img id="postImg" alt="" hidden>
+    <small id="postDate"></small>
+    <h2 id="postTitle"></h2>
+    <div id="postBody"></div>
+    <a class="btn" id="postLink" href="#" target="_blank" rel="noopener noreferrer" hidden>Open link ↗</a>
+  </article>
+</div>
 
 <!-- ============ LIGHTBOX ============ -->
 <div id="lb" role="dialog" aria-modal="true" aria-label="Photo viewer" hidden>
@@ -146,6 +169,7 @@
   <button class="lb-arrow next round" id="lbNext" aria-label="Next">›</button>
 </div>
 
+<script src="config.js"></script>
 <script src="app.js" defer></script>
 
 </body></html>

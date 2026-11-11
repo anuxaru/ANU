@@ -1,0 +1,165 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex,nofollow">
+<meta name="theme-color" content="#c2456b">
+<title>Anu Admin</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600&family=Jost:wght@300;400;500&family=Pinyon+Script&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="admin.css">
+</head>
+<body>
+
+<!-- LOGIN -->
+<main id="viewLogin" class="center-screen" hidden>
+  <form class="login card" id="loginForm">
+    <p class="script big">Anu</p>
+    <h1>Admin panel</h1>
+    <p class="muted" id="loginHint">Sign in to manage your website.</p>
+    <label>Email<input type="email" id="email" autocomplete="email" required placeholder="you@example.com"></label>
+    <label>Password<input type="password" id="password" autocomplete="current-password" required minlength="6" placeholder="Your password"></label>
+    <button class="btn" id="loginBtn" type="submit">Sign in</button>
+    <button class="link" id="toggleMode" type="button">First time? Create your account</button>
+  </form>
+</main>
+
+<!-- CLAIM ADMIN -->
+<main id="viewClaim" class="center-screen" hidden>
+  <div class="login card">
+    <p class="script big">Almost there</p>
+    <h1>Become the admin</h1>
+    <p class="muted">You are signed in. Tap the button to make this account the owner of the website. This works only once, so do it with your own account.</p>
+    <button class="btn" id="claimBtn">Make me the admin</button>
+    <button class="link" data-logout>Sign out</button>
+    <p class="muted small" id="claimMsg"></p>
+  </div>
+</main>
+
+<!-- APP -->
+<div id="viewApp" class="app" hidden>
+  <aside class="side">
+    <div class="brand"><span class="script">Anu</span><small>admin</small></div>
+    <nav class="tabs" id="tabs">
+      <button data-tab="photos" class="on"><i>🖼</i><span>Photos</span></button>
+      <button data-tab="blog"><i>📝</i><span>Blog</span></button>
+      <button data-tab="social"><i>🔗</i><span>Social</span></button>
+      <button data-tab="help"><i>💡</i><span>Help</span></button>
+    </nav>
+    <div class="side-foot">
+      <a class="btn ghost small-btn" href="index.html" target="_blank" rel="noopener">View website ↗</a>
+      <button class="link" data-logout>Sign out</button>
+    </div>
+  </aside>
+
+  <main class="content">
+
+    <!-- PHOTOS -->
+    <section id="tab-photos" class="tabpane">
+      <header class="head"><h2>Photos</h2><p class="muted">Add pictures to the gallery. They show up on the website straight away.</p></header>
+
+      <div class="card">
+        <h3>1. Add new photos</h3>
+        <div class="row">
+          <label class="grow">Where should they go?
+            <select id="photoSection"><option value="gallery">Gallery</option><option value="collage">Collages</option></select>
+          </label>
+        </div>
+        <div class="drop" id="drop">
+          <input type="file" id="fileInput" accept="image/*" multiple hidden>
+          <button class="btn" id="pickBtn" type="button">📷 Choose photos from my phone or computer</button>
+          <p class="muted small">You can pick many at once. Big photos are made smaller automatically.</p>
+          <div class="progress" id="progress" hidden><i id="progressBar"></i></div>
+        </div>
+        <details class="alt">
+          <summary>Or add a photo using an image link</summary>
+          <div class="row wrap">
+            <label class="grow">Image link<input type="url" id="linkUrl" placeholder="https://example.com/photo.jpg"></label>
+            <label class="grow">Caption<input type="text" id="linkCap" placeholder="A few sweet words"></label>
+            <button class="btn" id="linkAdd" type="button">Add</button>
+          </div>
+        </details>
+      </div>
+
+      <div class="card">
+        <h3>2. Your photos <span class="count" id="countPhotos"></span></h3>
+        <p class="muted small">Edit a caption and tap outside the box to save. Use the arrows to change the order.</p>
+        <h4>Gallery</h4>
+        <div class="grid" id="gridGallery"></div>
+        <h4>Collages</h4>
+        <div class="grid" id="gridCollage"></div>
+      </div>
+    </section>
+
+    <!-- BLOG -->
+    <section id="tab-blog" class="tabpane" hidden>
+      <header class="head"><h2>Blog</h2><p class="muted">Write little stories or share links. Post from your phone any time.</p></header>
+
+      <div class="card" id="postForm">
+        <h3 id="postFormTitle">Write a new post</h3>
+        <label>Title<input type="text" id="pTitle" placeholder="Our first trip together" maxlength="120"></label>
+        <label>Short summary <small class="muted">(shown on the card)</small><input type="text" id="pExcerpt" placeholder="One sentence about this post" maxlength="200"></label>
+        <label>Story <small class="muted">(optional, leave empty if you only want a link)</small><textarea id="pBody" rows="7" placeholder="Write here..."></textarea></label>
+        <div class="cover-box">
+          <div class="cover-prev" id="coverPrev">No cover image</div>
+          <div class="grow">
+            <label>Cover image link<input type="url" id="pCoverUrl" placeholder="https://... (or upload below)"></label>
+            <input type="file" id="pCoverFile" accept="image/*" hidden>
+            <button class="btn ghost" id="pCoverPick" type="button">📷 Upload cover image</button>
+          </div>
+        </div>
+        <label>Separate link <small class="muted">(optional: a YouTube video, article, anything)</small><input type="url" id="pLink" placeholder="https://..."></label>
+        <label class="check"><input type="checkbox" id="pPublished" checked> Show this post on the website</label>
+        <div class="row">
+          <button class="btn" id="postSave" type="button">Save post</button>
+          <button class="btn ghost" id="postCancel" type="button" hidden>Cancel editing</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>Your posts <span class="count" id="countPosts"></span></h3>
+        <div id="postList" class="list"></div>
+      </div>
+    </section>
+
+    <!-- SOCIAL -->
+    <section id="tab-social" class="tabpane" hidden>
+      <header class="head"><h2>Social links</h2><p class="muted">Paste a link for each place you want to show. Leave a box empty to hide it.</p></header>
+      <div class="card">
+        <div class="social-grid" id="socialGrid"></div>
+        <h4>More links</h4>
+        <div id="customList" class="list"></div>
+        <button class="btn ghost" id="customAdd" type="button">＋ Add another link</button>
+        <div class="row"><button class="btn" id="socialSave" type="button">Save social links</button></div>
+      </div>
+    </section>
+
+    <!-- HELP -->
+    <section id="tab-help" class="tabpane" hidden>
+      <header class="head"><h2>Help</h2><p class="muted">Everything in plain words.</p></header>
+      <div class="card help">
+        <h3>Add photos from my phone</h3>
+        <p>Go to <b>Photos</b>, choose Gallery or Collages, then tap <b>Choose photos</b>. Pick pictures from your phone and wait for the bar to finish.</p>
+        <h3>Change a caption or the order</h3>
+        <p>Type in the caption box under any photo and tap outside it. Use ◀ ▶ to move it. Use 🗑 to delete it.</p>
+        <h3>Write a blog post</h3>
+        <p>Go to <b>Blog</b>, fill the title, add a story and/or a link, add a cover image, then <b>Save post</b>.</p>
+        <h3>Add social media</h3>
+        <p>Go to <b>Social</b>, paste your profile links, then press <b>Save social links</b>. Icons appear at the bottom of the website.</p>
+        <h3>Tip</h3>
+        <p>Add this page to your phone's home screen so it opens like an app.</p>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<div id="toast" role="status" aria-live="polite"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+<script src="config.js"></script>
+<script src="admin.js"></script>
+</body>
+</html>

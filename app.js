@@ -1,8 +1,8 @@
-(() => {
+(async () => {
 "use strict";
 
-/* ================= DATA (edit captions here) ================= */
-const P = [
+/* ================= DATA (fallback photos, used if the database is unreachable) ================= */
+let P = [
   ["p11.jpg",240,486,"In blue, like my favourite sky"],
   ["p06.jpg",388,600,"A bride I'll never stop dreaming of"],
   ["p02.jpg",312,408,"Pink saree, golden smile"],
@@ -25,7 +25,7 @@ const P = [
   ["p09.jpg",228,276,"Peach & poetry"]
 ].map(([f,w,h,c]) => ({src:"img/"+f, w, h, cap:c}));
 
-const COLLAGES = [
+let COLLAGES = [
   {src:"img/bg.jpg",w:900,h:1599,cap:"Anamika: cutie collage"},
   {src:"img/anu-1.jpg",w:640,h:911,cap:"Happy Birthday, Dear Anu"},
   {src:"img/anu-4.jpg",w:640,h:1137,cap:"Every shade of you"},
@@ -56,6 +56,28 @@ const LINES = [
   "Anu, you're the 9th of January of my heart: the most special day.",
   "Is it your birthday, or did the sun just come out for you?"
 ];
+
+/* ================= LIVE DATA (Supabase) =================
+   Photos, collages, blog posts and social links come from the admin panel.
+   If the database cannot be reached, the built-in photos above are used. */
+let POSTS = [], SOCIALS = [];
+try {
+  const C = window.ANU_CONFIG;
+  if (C) {
+    const get = t => fetch(C.url + "/rest/v1/" + t, {headers:{apikey:C.key, Authorization:"Bearer " + C.key}, signal:AbortSignal.timeout(4000)})
+      .then(r => r.ok ? r.json() : Promise.reject(r.status));
+    const [ph, po, so] = await Promise.all([
+      get("photos?select=*&order=sort"),
+      get("posts?select=*&published=eq.true&order=created_at.desc"),
+      get("socials?select=*&order=sort")
+    ]);
+    const mapP = r => ({src:r.url, w:r.width || 300, h:r.height || 400, cap:r.caption || ""});
+    const g = ph.filter(r => r.section === "gallery").map(mapP), c = ph.filter(r => r.section === "collage").map(mapP);
+    if (g.length) P = g;
+    if (ph.length) COLLAGES = c;
+    POSTS = po; SOCIALS = so;
+  }
+} catch (e) { console.warn("Using built-in photos:", e); }
 
 const $ = (s, r=document) => r.querySelector(s);
 const $$ = (s, r=document) => [...r.querySelectorAll(s)];
@@ -425,6 +447,60 @@ if (!RM && matchMedia("(hover:hover) and (pointer:fine)").matches){
   }
   draw();
   document.addEventListener("visibilitychange", () => { if (document.hidden) cancelAnimationFrame(raf); else draw(); });
+})();
+
+/* ================= COLLAGES VISIBILITY ================= */
+if (!COLLAGES.length) { const sec = cWrap.closest("section"); if (sec) sec.hidden = true; }
+
+/* ================= BLOG ================= */
+(() => {
+  const sec = $("#blog"), grid = $("#blogGrid");
+  if (!POSTS.length) { sec.hidden = true; $$('a[href="#blog"]').forEach(a => a.hidden = true); return; }
+  const dlg = $("#post"), safe = u => /^(https?:|mailto:|tel:)/i.test(u || "") ? u : "";
+  const fmt = d => new Date(d).toLocaleDateString(undefined, {year:"numeric", month:"long", day:"numeric"});
+  POSTS.forEach(p => {
+    const a = document.createElement("article");
+    a.className = "bcard"; a.tabIndex = 0; a.setAttribute("role", "button");
+    const cover = safe(p.cover_url);
+    a.innerHTML = (cover ? `<img src="${cover}" alt="" loading="lazy" decoding="async">` : `<div class="bph">♡</div>`) +
+      `<div class="bbody"><small>${fmt(p.created_at)}</small><h3></h3><p></p></div>`;
+    $("h3", a).textContent = p.title; $("p", a).textContent = p.excerpt || (p.body || "").slice(0, 110);
+    const open = () => {
+      if (!p.body && safe(p.link_url)) { window.open(safe(p.link_url), "_blank", "noopener"); return; }
+      $("#postTitle").textContent = p.title; $("#postDate").textContent = fmt(p.created_at);
+      const im = $("#postImg"); im.hidden = !cover; if (cover) im.src = cover;
+      const bd = $("#postBody"); bd.textContent = "";
+      (p.body || "").split(/\n{2,}/).forEach(t => { const q = document.createElement("p"); q.textContent = t; bd.append(q); });
+      const l = $("#postLink"); l.hidden = !safe(p.link_url); if (safe(p.link_url)) l.href = safe(p.link_url);
+      dlg.hidden = false; document.body.classList.add("locked"); $("#postClose").focus();
+    };
+    a.addEventListener("click", open);
+    a.addEventListener("keydown", e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); open(); } });
+    grid.append(a);
+  });
+  const close = () => { dlg.hidden = true; document.body.classList.remove("locked"); };
+  $("#postClose").addEventListener("click", close);
+  dlg.addEventListener("click", e => { if (e.target === dlg) close(); });
+  document.addEventListener("keydown", e => { if (e.key === "Escape" && !dlg.hidden) close(); });
+  observe($$(".bcard", grid));
+})();
+
+/* ================= SOCIAL LINKS ================= */
+(() => {
+  const ICONS = {instagram:"📸", facebook:"👍", whatsapp:"💬", tiktok:"🎵", youtube:"▶️", x:"🐦", snapchat:"👻", telegram:"✈️", pinterest:"📌", linkedin:"💼", spotify:"🎧", email:"✉️", custom:"🔗"};
+  const NAMES = {instagram:"Instagram", facebook:"Facebook", whatsapp:"WhatsApp", tiktok:"TikTok", youtube:"YouTube", x:"X", snapchat:"Snapchat", telegram:"Telegram", pinterest:"Pinterest", linkedin:"LinkedIn", spotify:"Spotify", email:"Email"};
+  const box = $("#socials");
+  const list = SOCIALS.filter(s => /^(https?:|mailto:|tel:)/i.test(s.url));
+  if (!list.length) { box.hidden = true; return; }
+  list.forEach(s => {
+    const a = document.createElement("a");
+    a.href = s.url; a.target = "_blank"; a.rel = "noopener noreferrer"; a.className = "soc";
+    const label = s.label || NAMES[s.platform] || "Link";
+    a.setAttribute("aria-label", label);
+    a.innerHTML = `<span class="soc-i">${ICONS[s.platform] || "🔗"}</span><span class="soc-t"></span>`;
+    $(".soc-t", a).textContent = label;
+    box.append(a);
+  });
 })();
 
 /* ================= INIT ================= */
