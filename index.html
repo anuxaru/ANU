@@ -1,0 +1,151 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>For Anu, With Love</title>
+<meta name="theme-color" content="#1c0a12">
+<meta name="description" content="A little love gallery made only for Anamika “Anu”.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400;1,500&family=Jost:wght@300;400;500&family=Pinyon+Script&family=Caveat:wght@500&display=swap" rel="stylesheet">
+<link rel="preload" as="image" href="img/p11.jpg">
+<link rel="stylesheet" href="style.css">
+
+<!-- ============ ENVELOPE INTRO ============ -->
+<div id="gate" role="dialog" aria-label="A letter for Anu">
+  <div class="gate-inner">
+    <p class="gate-to">a little something for</p>
+    <h1 class="script gate-name">Anamika</h1>
+    <button class="envelope" id="openGate" aria-label="Open the envelope">
+      <span class="env-back"></span>
+      <span class="env-card"><span class="script">for you</span></span>
+      <span class="env-front"></span>
+      <span class="env-flap"></span>
+      <span class="seal">A</span>
+    </button>
+    <p class="gate-hint">tap the seal to open ♡</p>
+  </div>
+</div>
+
+<canvas id="petals" aria-hidden="true"></canvas>
+
+<!-- ============ NAV ============ -->
+<header class="nav" id="nav">
+  <a href="#top" class="brand script">Anu</a>
+  <nav aria-label="Sections">
+    <a href="#gallery">Gallery</a>
+    <a href="#reasons">Reasons</a>
+    <a href="#lines">Lines</a>
+    <a href="#letter">Letter</a>
+  </nav>
+  <button class="theme-btn" id="themeBtn" aria-label="Switch light or dark mode">◐</button>
+</header>
+
+<main id="top">
+  <!-- ============ HERO ============ -->
+  <section class="hero">
+    <div class="hero-text">
+      <p class="eyebrow">January 9 · my favourite day of the year</p>
+      <h1 class="hero-title"><span class="script">Anamika</span><em>“Anu”</em></h1>
+      <p class="lede">Every photo in here is a small piece of the most beautiful person I know. This gallery is yours, and so is my heart.</p>
+      <div class="hero-cta">
+        <a href="#gallery" class="btn">See the gallery</a>
+        <button class="btn ghost" id="loveBtn">Send love ♡</button>
+      </div>
+      <div class="count" aria-live="polite">
+        <div><b id="cd">0</b><small>days</small></div>
+        <div><b id="ch">0</b><small>hours</small></div>
+        <div><b id="cm">0</b><small>min</small></div>
+        <div><b id="cs">0</b><small>sec</small></div>
+        <p id="cmsg">until your birthday, Anu</p>
+      </div>
+    </div>
+    <div class="hero-stack" id="heroStack" aria-hidden="true">
+      <figure class="hs hs1"><img src="img/p11.jpg" alt="" width="240" height="486"><figcaption>my sky ♡</figcaption></figure>
+      <figure class="hs hs2"><img src="img/p02.jpg" alt="" width="312" height="408" decoding="async"><figcaption>pink saree days</figcaption></figure>
+      <figure class="hs hs3"><img src="img/p07.jpg" alt="" width="252" height="600" decoding="async"><figcaption>that red lipstick</figcaption></figure>
+    </div>
+  </section>
+
+  <!-- ============ MARQUEE ============ -->
+  <div class="marquee" aria-hidden="true"><div class="mq-track" id="mq"></div></div>
+
+  <!-- ============ GALLERY ============ -->
+  <section id="gallery" class="section">
+    <p class="eyebrow center">The gallery</p>
+    <h2 class="h2">Every version of <span class="script">you</span></h2>
+    <p class="sub center">Pick a style. Tap any photo to open it, swipe to see the next one, and double-tap to leave a heart.</p>
+
+    <div class="switch" role="tablist" aria-label="Gallery style" id="switch">
+      <button role="tab" data-mode="masonry">Masonry</button>
+      <button role="tab" data-mode="polaroid">Polaroids</button>
+      <button role="tab" data-mode="bento">Bento</button>
+      <button role="tab" data-mode="cover">3D Carousel</button>
+      <button role="tab" data-mode="film">Film Roll</button>
+      <button role="tab" data-mode="heart">Heart</button>
+    </div>
+
+    <div id="stage" class="stage"></div>
+    <div class="cover-nav" id="coverNav" hidden>
+      <button class="round" id="cPrev" aria-label="Previous photo">‹</button>
+      <span id="cCount">1 / 1</span>
+      <button class="round" id="cNext" aria-label="Next photo">›</button>
+    </div>
+  </section>
+
+  <!-- ============ COLLAGES ============ -->
+  <section class="section">
+    <p class="eyebrow center">The originals</p>
+    <h2 class="h2">The <span class="script">collages</span></h2>
+    <div class="collages" id="collages"></div>
+  </section>
+
+  <!-- ============ REASONS ============ -->
+  <section id="reasons" class="section">
+    <p class="eyebrow center">Tap a card to flip it</p>
+    <h2 class="h2">Little <span class="script">reasons</span></h2>
+    <div class="reasons" id="reasonGrid"></div>
+  </section>
+
+  <!-- ============ PICK-UP LINES ============ -->
+  <section id="lines" class="section">
+    <div class="lines">
+      <p class="eyebrow center">Warning: extremely cheesy</p>
+      <h2 class="h2">Lines for <span class="script">Anu</span></h2>
+      <p id="line" class="line">Tap the button, Anu ♡</p>
+      <button class="btn" id="lineBtn">Give me one</button>
+    </div>
+  </section>
+
+  <!-- ============ LETTER ============ -->
+  <section id="letter" class="section">
+    <article class="letter">
+      <span class="stamp" aria-hidden="true"><img src="img/p13.jpg" alt="" width="224" height="276" loading="lazy"></span>
+      <p class="script salute">Dear Anu,</p>
+      <p>Happy Birthday, Anu! You are not just someone special, you are my partner in fun and my favourite reason to smile. Thank you for every laugh and every sweet memory we share.</p>
+      <p>May this year bring you endless happiness, big dreams that come true, lots of chocolate and even more love. Always stay as lovely as you are.</p>
+      <p>Every photo above is my favourite, until I see the next one. That's how it always is with you.</p>
+      <p class="script sign">Forever yours ♡</p>
+    </article>
+  </section>
+
+  <section class="finale">
+    <h2 class="script">Happy Birthday, Anu</h2>
+    <p>January 9 is your day, so go and shine like the star you are.</p>
+    <button class="btn" id="partyBtn">Celebrate</button>
+  </section>
+</main>
+
+<footer>made with ♡ only for Anamika “Anu” · January 9</footer>
+
+<!-- ============ LIGHTBOX ============ -->
+<div id="lb" role="dialog" aria-modal="true" aria-label="Photo viewer" hidden>
+  <button class="lb-x round" id="lbClose" aria-label="Close">×</button>
+  <button class="lb-arrow prev round" id="lbPrev" aria-label="Previous">‹</button>
+  <figure class="lb-fig">
+    <img id="lbImg" alt="">
+    <figcaption><span id="lbCap"></span><small id="lbNum"></small></figcaption>
+  </figure>
+  <button class="lb-arrow next round" id="lbNext" aria-label="Next">›</button>
+</div>
+
+<script src="app.js" defer></script>
+
+</body></html>
