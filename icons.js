@@ -8,6 +8,7 @@ window.ANU_ICONS = (() => {
   const OWN = {
     email: svg("<rect x='3' y='5' width='18' height='14' rx='2'/><path d='m3 7 9 6 9-6'/>"),
     link:  svg("<path d='M10 13a5 5 0 0 0 7.07 0l3-3a5 5 0 0 0-7.07-7.07l-1.7 1.7'/><path d='M14 11a5 5 0 0 0-7.07 0l-3 3a5 5 0 0 0 7.07 7.07l1.7-1.7'/>"),
+    up:    svg("<path d='M12 19V5'/><path d='m5 12 7-7 7 7'/>"),
     chat:  svg("<path d='M21 12a8 8 0 0 1-11.6 7.1L4 20l1.1-4.4A8 8 0 1 1 21 12z'/>")
   };
   // [key, name, brand file, example link]

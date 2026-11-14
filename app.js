@@ -44,17 +44,18 @@ const LINES = [
 
 /* ================= LIVE DATA (Supabase) =================
    Everything below is managed from the admin panel. */
-let POSTS = [], SOCIALS = [], SECTIONS = {};
+let POSTS = [], SOCIALS = [], SECTIONS = {}, SETTINGS = {};
 const CFG = window.ANU_CONFIG;
 try {
   if (CFG) {
     const get = t => fetch(CFG.url + "/rest/v1/" + t, {headers:{apikey:CFG.key, Authorization:"Bearer " + CFG.key}, signal:AbortSignal.timeout(4500)})
       .then(r => r.ok ? r.json() : Promise.reject(r.status));
-    const [ph, po, so, se] = await Promise.all([
+    const [ph, po, so, se, ss] = await Promise.all([
       get("photos?select=*&order=sort"),
       get("posts?select=*&published=eq.true&order=created_at.desc"),
       get("socials?select=*&order=sort"),
-      get("sections?select=*")
+      get("sections?select=*"),
+      get("site_settings?select=*").catch(() => [])
     ]);
     const mapP = r => ({src:r.url, w:r.width || 300, h:r.height || 400, cap:r.caption || ""});
     const by = a => ph.filter(r => r.area === a).map(mapP);
@@ -62,6 +63,7 @@ try {
     REASONIMG = by("reasons"); LETTER = by("letter"); SPOT = by("spotlight");
     POSTS = po; SOCIALS = so;
     se.forEach(r => SECTIONS[r.key] = r.visible);
+    ss.forEach(r => SETTINGS[r.key] = r.value);
   }
 } catch (e) { console.warn("Using built-in photos:", e); }
 
@@ -73,6 +75,20 @@ const store = {
   set(k,v){ try{ localStorage.setItem(k,v); }catch(e){} }
 };
 const safeUrl = u => /^(https?:|mailto:|tel:)/i.test(u || "") ? u : "";
+
+/* ================= SITE NAME, FAVICON AND LOGO (set in the admin panel; empty = the defaults) ================= */
+(() => {
+  if (SETTINGS.title) document.title = SETTINGS.title;
+  if (SETTINGS.favicon){
+    let l = $('link[rel~="icon"]'); if (!l){ l = document.createElement("link"); l.rel = "icon"; document.head.append(l); }
+    l.href = SETTINGS.favicon;
+  }
+  if (SETTINGS.logo){
+    const b = $(".nav .brand");
+    if (b){ b.textContent = ""; const im = document.createElement("img"); im.src = SETTINGS.logo; im.alt = "Logo"; im.className = "brand-logo"; b.append(im); }
+  }
+  store.set("anu-site", JSON.stringify({title:SETTINGS.title || "", favicon:SETTINGS.favicon || ""}));
+})();
 
 /* ================= THEME ================= */
 const root = document.documentElement;
@@ -481,12 +497,13 @@ function swipe(el, onSwipe, onMove){
     $("small", a).textContent = fmt(p.created_at);
     $("h3", a).textContent = p.title; $("p", a).textContent = p.excerpt || (p.body || "").slice(0, 110);
     const open = () => {
-      if (!p.body && safeUrl(p.link_url)){ window.open(safeUrl(p.link_url), "_blank", "noopener"); return; }
+      const link = p.link_hidden ? "" : safeUrl(p.link_url);
+      if (!p.body && link){ window.open(link, "_blank", "noopener"); return; }
       $("#postTitle").textContent = p.title; $("#postDate").textContent = fmt(p.created_at);
       const im = $("#postImg"); im.hidden = !cover; if (cover) im.src = cover;
       const bd = $("#postBody"); bd.textContent = "";
-      (p.body || "").split(/\n{2,}/).forEach(t => { const q = document.createElement("p"); q.textContent = t; bd.append(q); });
-      const l = $("#postLink"); l.hidden = !safeUrl(p.link_url); if (safeUrl(p.link_url)) l.href = safeUrl(p.link_url);
+      (p.body || p.excerpt || "").split(/\n{2,}/).forEach(t => { const q = document.createElement("p"); q.textContent = t; bd.append(q); });
+      const l = $("#postLink"); l.hidden = !link; if (link) l.href = link;
       dlg.hidden = false; document.body.classList.add("locked"); $("#postClose").focus();
     };
     a.addEventListener("click", open);
@@ -515,78 +532,6 @@ function swipe(el, onSwipe, onMove){
     const t = document.createElement("span"); t.textContent = label; a.append(t);
     box.append(a);
   });
-})();
-
-/* ================= LIVE CHAT ================= */
-(() => {
-  const wrap = $("#chat"); if (!CFG || !window.ANU_ICONS) return;
-  if (SECTIONS.chat === false) return;
-  wrap.hidden = false;
-  $("#chatIco").style.setProperty("--i", 'url("' + ANU_ICONS.url("chat") + '")');
-  const fab = $("#chatFab"), panel = $("#chatPanel"), log = $("#chatLog"), form = $("#chatForm"), text = $("#chatText"),
-        nameIn = $("#chatName"), note = $("#chatNote"), dot = $("#chatDot");
-  let token = store.get("anu-chat-token");
-  if (!token || token.length < 20){
-    token = (crypto.randomUUID ? crypto.randomUUID().replace(/-/g, "") : Math.random().toString(36).slice(2)) + Math.random().toString(36).slice(2, 12);
-    store.set("anu-chat-token", token);
-  }
-  nameIn.value = store.get("anu-chat-name") || "";
-  let msgs = [], open = false, seen = +(store.get("anu-chat-seen") || 0), timer = 0, busy = false;
-  const rpc = (fn, body) => fetch(CFG.url + "/rest/v1/rpc/" + fn, {method:"POST",
-    headers:{apikey:CFG.key, Authorization:"Bearer " + CFG.key, "Content-Type":"application/json"}, body:JSON.stringify(body)})
-    .then(async r => { if (!r.ok){ let m = ""; try{ m = (await r.json()).message; }catch(e){} throw new Error(m || "Could not reach chat"); } return r.status === 204 ? null : r.json(); });
-  const fmtT = d => new Date(d).toLocaleTimeString([], {hour:"2-digit", minute:"2-digit"});
-  function draw(){
-    log.textContent = "";
-    const hi = document.createElement("div"); hi.className = "cm them"; hi.textContent = "Hi! Write me a message here and I will reply as soon as I see it ♡"; log.append(hi);
-    msgs.forEach(m => {
-      const d = document.createElement("div"); d.className = "cm " + (m.sender === "visitor" ? "me" : "them");
-      d.textContent = m.body; const s = document.createElement("small"); s.textContent = fmtT(m.created_at); d.append(s); log.append(d);
-    });
-    log.scrollTop = log.scrollHeight;
-  }
-  const adminCount = () => msgs.filter(m => m.sender === "admin").length;
-  function updateDot(){
-    const n = adminCount() - seen;
-    dot.hidden = open || n <= 0; dot.textContent = n > 9 ? "9+" : String(n);
-  }
-  async function pull(){
-    if (busy) return; busy = true;
-    try {
-      const rows = await rpc("chat_fetch", {p_token:token});
-      const changed = rows.length !== msgs.length || (rows.length && rows[rows.length - 1].id !== (msgs[msgs.length - 1] || {}).id);
-      msgs = rows;
-      if (open){ seen = adminCount(); store.set("anu-chat-seen", String(seen)); }
-      if (changed && open) draw();
-      updateDot();
-    } catch (e) { /* offline, try again later */ }
-    busy = false;
-  }
-  function schedule(){
-    clearTimeout(timer);
-    if (!document.hidden && (open || msgs.length)) timer = setTimeout(async () => { await pull(); schedule(); }, open ? 2500 : 10000);
-  }
-  function setOpen(v){
-    open = v; panel.hidden = !v; fab.setAttribute("aria-expanded", String(v));
-    if (v){ seen = adminCount(); store.set("anu-chat-seen", String(seen)); draw(); updateDot(); pull(); text.focus(); }
-    schedule();
-  }
-  fab.addEventListener("click", () => setOpen(!open));
-  $("#chatClose").addEventListener("click", () => setOpen(false));
-  document.addEventListener("keydown", e => { if (e.key === "Escape" && open && lb.hidden) setOpen(false); });
-  document.addEventListener("visibilitychange", () => { if (!document.hidden){ pull(); schedule(); } });
-  text.addEventListener("keydown", e => { if (e.key === "Enter" && !e.shiftKey){ e.preventDefault(); form.requestSubmit(); } });
-  form.addEventListener("submit", async e => {
-    e.preventDefault();
-    const body = text.value.trim(); if (!body) return;
-    const nm = nameIn.value.trim(); store.set("anu-chat-name", nm);
-    note.textContent = "";
-    text.value = "";
-    msgs.push({id:"tmp" + Date.now(), sender:"visitor", body, created_at:new Date().toISOString()}); draw();
-    try { await rpc("chat_send", {p_token:token, p_name:nm, p_body:body}); note.textContent = "Sent ♡"; pull(); schedule(); }
-    catch (err) { note.textContent = err.message || "Could not send, please try again"; msgs.pop(); draw(); text.value = body; }
-  });
-  pull().then(schedule);
 })();
 
 /* ================= FX ================= */
@@ -674,9 +619,43 @@ if (!RM && matchMedia("(hover:hover) and (pointer:fine)").matches){
   });
 })();
 
+/* ================= SLIDE TO GO BACK UP (bottom of the page) ================= */
+(() => {
+  const bar = $("#backtop"), h = $("#upHandle"); if (!bar || !h) return;
+  if (window.ANU_ICONS) $("#upIco").style.setProperty("--i", 'url("' + ANU_ICONS.url("up") + '")');
+  let drag = null, max = 0, busy = false;
+  const measure = () => { max = Math.max(0, bar.clientWidth - h.offsetWidth - 10); };
+  const setX = x => { h.style.transform = `translateX(${x}px)`; bar.style.setProperty("--p", max ? (x / max).toFixed(3) : "0"); };
+  function toTop(){
+    if (busy) return; busy = true; h.style.transition = "transform .35s cubic-bezier(.2,.8,.2,1)"; setX(max);
+    scrollTo({top:0, behavior: RM ? "auto" : "smooth"});
+    setTimeout(() => { h.style.transition = "transform .6s ease"; setX(0); busy = false; }, RM ? 150 : 1300);
+  }
+  h.addEventListener("pointerdown", e => {
+    if (busy) return; measure(); drag = {x:e.clientX, moved:false}; h.style.transition = "none";
+    try { h.setPointerCapture(e.pointerId); } catch (err) { /* ignore */ }
+  });
+  h.addEventListener("pointermove", e => {
+    if (!drag) return;
+    const dx = e.clientX - drag.x;
+    if (Math.abs(dx) > 6) drag.moved = true;
+    if (drag.moved) setX(Math.max(0, Math.min(max, dx)));
+  });
+  h.addEventListener("pointerup", () => {
+    if (!drag) return; const d = drag; drag = null;
+    const p = +bar.style.getPropertyValue("--p") || 0;
+    if (!d.moved || p > .82) toTop(); else { h.style.transition = "transform .35s ease"; setX(0); }   // a tap or a full slide goes up
+  });
+  h.addEventListener("pointercancel", () => { drag = null; h.style.transition = "transform .35s ease"; setX(0); });
+  h.addEventListener("keydown", e => { if (e.key === "Enter" || e.key === " "){ e.preventDefault(); measure(); toTop(); } });
+  addEventListener("resize", measure); measure();
+})();
+
 /* ================= INIT ================= */
 if (P.length) setMode(mode); else hideSection($("#gallery"));
 observe($$(".h2, .lines, .letter, .finale h2"));
 // hide menu links that point to a hidden section
 $$(".nav nav a").forEach(a => { const s = $(a.getAttribute("href")); if (s && s.hidden) a.hidden = true; });
+window.ANU_READY = {SECTIONS, store};
+document.dispatchEvent(new Event("anu-ready"));
 })();

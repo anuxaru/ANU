@@ -7,6 +7,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400;1,500&family=Jost:wght@300;400;500&family=Pinyon+Script&family=Caveat:wght@500&display=swap" rel="stylesheet">
 <link rel="preload" as="image" href="img/p11.jpg">
 <link rel="stylesheet" href="style.css">
+<script>try{var s=JSON.parse(localStorage.getItem("anu-site")||"{}");if(s.favicon){var l=document.createElement("link");l.rel="icon";l.href=s.favicon;document.head.appendChild(l)}}catch(e){}</script>
 
 <!-- ============ ENVELOPE INTRO ============ -->
 <div id="gate" role="dialog" aria-label="A letter for Anu">
@@ -149,6 +150,10 @@
 </main>
 
 <footer>
+  <div class="uptrack" id="backtop" data-section="backtop">
+    <span class="up-text">slide to go back up</span>
+    <button class="up-handle" id="upHandle" type="button" aria-label="Go back to the top of the page"><span class="ico" id="upIco"></span></button>
+  </div>
   <div class="socials" id="socials" aria-label="Social links" data-section="socials"></div>
   made with ♡ only for Anamika “Anu” · January 9
 </footer>
@@ -185,9 +190,11 @@
     <div class="chat-head"><div style="flex:1"><b>Chat with me</b><small>Send a message, I will reply here ♡</small></div>
       <button class="chat-x" id="chatClose" aria-label="Close chat">×</button></div>
     <div class="chat-log" id="chatLog" aria-live="polite"></div>
+    <div class="emo-pop" id="emoPop" hidden></div>
     <form class="chat-form" id="chatForm">
       <input type="text" id="chatName" placeholder="Your name (optional)" maxlength="40" autocomplete="given-name">
-      <div class="chat-row"><textarea id="chatText" placeholder="Write a message..." maxlength="1000" rows="1" required></textarea>
+      <div class="chat-row"><button class="chat-emo" id="chatEmo" type="button" aria-label="Add an emoji">😊</button>
+        <textarea id="chatText" placeholder="Write a message..." maxlength="1000" rows="1" required></textarea>
         <button class="chat-send" type="submit" aria-label="Send">➤</button></div>
       <p class="chat-note" id="chatNote"></p>
     </form>
@@ -197,5 +204,6 @@
 <script src="config.js"></script>
 <script src="icons.js"></script>
 <script src="app.js" defer></script>
+<script src="chat.js" defer></script>
 
 </body></html>

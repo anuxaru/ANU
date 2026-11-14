@@ -13,12 +13,13 @@
 </head>
 <body>
 
-<!-- LOGIN -->
+<!-- STEP 1 · EMAIL + PASSWORD -->
 <main id="viewLogin" class="center-screen" hidden>
   <form class="login card" id="loginForm">
     <p class="script big">Anu</p>
     <h1>Admin panel</h1>
     <p class="muted" id="loginHint">Sign in to manage your website.</p>
+    <p class="notice" id="loginNotice" hidden></p>
     <label>Email<input type="email" id="email" autocomplete="email" required placeholder="you@example.com"></label>
     <label>Password<input type="password" id="password" autocomplete="current-password" required minlength="6" placeholder="Your password"></label>
     <button class="btn" id="loginBtn" type="submit">Sign in</button>
@@ -38,6 +39,21 @@
   </div>
 </main>
 
+<!-- STEP 3 · FACE CHECK (also used to set up / test the face lock) -->
+<div id="faceOverlay" class="overlay" hidden>
+  <div class="login card face-card">
+    <h1 id="faceTitle">Face check</h1>
+    <p class="muted small" id="faceSub">Look at the camera, then follow the steps. Nothing is recorded.</p>
+    <div class="face-frame"><video id="faceVideo" playsinline muted></video><i class="ring"></i></div>
+    <p class="face-say" id="faceSay">Starting camera…</p>
+    <ol class="steps" id="faceSteps"><li>Look straight</li><li>Turn one way</li><li>Turn the other way</li><li>Look straight</li></ol>
+    <div class="row" style="justify-content:center">
+      <button class="btn" id="faceRetry" type="button" hidden>Try again</button>
+      <button class="btn ghost" id="faceCancel" type="button">Cancel</button>
+    </div>
+  </div>
+</div>
+
 <!-- APP -->
 <div id="viewApp" class="app" hidden>
   <aside class="side">
@@ -47,9 +63,9 @@
       <button data-tab="blog"><i>📝</i><span>Blog</span></button>
       <button data-tab="social"><i>🔗</i><span>Social</span></button>
       <button data-tab="chat"><i>💬</i><span>Chat</span><b class="badge" id="chatBadge" hidden>0</b></button>
-      <button data-tab="sections"><i>👁</i><span>Show</span></button>
+      <button data-tab="site"><i>🌐</i><span>Site</span></button>
       <button data-tab="trash"><i>🗑</i><span>Trash</span></button>
-      <button data-tab="help"><i>💡</i><span>Help</span></button>
+      <button data-tab="security"><i>🔒</i><span>Security</span></button>
     </nav>
     <div class="side-foot">
       <a class="btn ghost small-btn" href="index.html" target="_blank" rel="noopener">View website ↗</a>
@@ -58,6 +74,7 @@
   </aside>
 
   <main class="content">
+    <div class="idle-bar" id="idleBar" hidden>You will be signed out in <b id="idleSecs">60</b> seconds because of no activity. Tap anywhere to stay signed in.</div>
 
     <!-- PHOTOS -->
     <section id="tab-photos" class="tabpane">
@@ -67,7 +84,7 @@
 
     <!-- BLOG -->
     <section id="tab-blog" class="tabpane" hidden>
-      <header class="head"><h2>Blog</h2><p class="muted">Write little stories or share links. Post from your phone any time.</p></header>
+      <header class="head"><h2>Blog</h2><p class="muted">Write little stories or share links. Hide or delete any post at any time.</p></header>
 
       <div class="card" id="postForm">
         <h3 id="postFormTitle">Write a new post</h3>
@@ -83,6 +100,7 @@
           </div>
         </div>
         <label>Separate link <small class="muted">(optional: a YouTube video, article, anything)</small><input type="url" id="pLink" placeholder="https://..."></label>
+        <label class="check"><input type="checkbox" id="pLinkShow" checked> Show the link button on the website</label>
         <label class="check"><input type="checkbox" id="pPublished" checked> Show this post on the website</label>
         <div class="row">
           <button class="btn" id="postSave" type="button">Save post</button>
@@ -92,13 +110,14 @@
 
       <div class="card">
         <h3>Your posts <span class="count" id="countPosts"></span></h3>
+        <p class="muted small">👁 hides or shows a post · ✏️ edits · 🗑 moves it to the Trash (you can restore it).</p>
         <div id="postList" class="list"></div>
       </div>
     </section>
 
     <!-- SOCIAL -->
     <section id="tab-social" class="tabpane" hidden>
-      <header class="head"><h2>Social links</h2><p class="muted">Paste a link next to each icon. Leave a box empty to hide it. The icons use your website's colours.</p></header>
+      <header class="head"><h2>Social links</h2><p class="muted">Paste a link next to each icon. Use 👁 to hide a link without losing it, and ✕ to delete it. Press Save at the bottom to apply.</p></header>
       <div class="card">
         <div class="social-grid" id="socialGrid"></div>
         <h4>More links</h4>
@@ -111,7 +130,7 @@
 
     <!-- CHAT -->
     <section id="tab-chat" class="tabpane" hidden>
-      <header class="head"><h2>Chat</h2><p class="muted">Messages your visitors send from the chat bubble on the website. New messages appear here instantly.</p></header>
+      <header class="head"><h2>Chat</h2><p class="muted">Every chat is saved here. New messages, typing and reactions appear instantly.</p></header>
       <div class="card notify">
         <div><b>Get alerted for new messages</b><p class="muted small" id="notifyState">Keep this page open (a tab in the background is fine) to hear a sound and see an alert.</p></div>
         <button class="btn ghost small-btn" id="notifyBtn" type="button">🔔 Turn on alerts</button>
@@ -121,11 +140,14 @@
         <div class="card thread" id="thread" hidden>
           <div class="thread-head">
             <button class="ic back" id="threadBack" aria-label="Back to all chats">‹</button>
-            <b id="threadName">Visitor</b>
+            <div class="grow"><b id="threadName">Visitor</b><small id="threadSub" class="muted"></small></div>
+            <button class="ic" id="threadSave" aria-label="Download this chat">⬇</button>
             <button class="ic del" id="threadDel" aria-label="Delete this chat">🗑</button>
           </div>
           <div class="thread-log" id="threadLog"></div>
+          <div class="emo-pop" id="emoPop" hidden></div>
           <form class="thread-form" id="replyForm">
+            <button class="ic emo-btn" id="replyEmo" type="button" aria-label="Add an emoji">😊</button>
             <textarea id="replyText" rows="2" placeholder="Write a reply..." maxlength="1000" required></textarea>
             <button class="btn" type="submit">Send</button>
           </form>
@@ -133,19 +155,56 @@
       </div>
     </section>
 
-    <!-- SHOW / HIDE -->
-    <section id="tab-sections" class="tabpane" hidden>
-      <header class="head"><h2>Show or hide</h2><p class="muted">Switch any part of the website on or off. Nothing is deleted, it is only hidden.</p></header>
-      <div class="card"><div class="list" id="sectionList"></div></div>
+    <!-- SITE -->
+    <section id="tab-site" class="tabpane" hidden>
+      <header class="head"><h2>Site</h2><p class="muted">Your website's name, small icon and logo, plus switches to show or hide any part.</p></header>
+
+      <div class="card">
+        <h3>Website name</h3>
+        <p class="muted small">Shown in the browser tab. The default is <b>For Anu, With Love</b>.</p>
+        <label>Name<input type="text" id="setTitle" maxlength="80" placeholder="For Anu, With Love"></label>
+        <div class="row"><button class="btn" id="setTitleSave" type="button">Save name</button><button class="btn ghost" id="setTitleReset" type="button">Use the default</button></div>
+      </div>
+
+      <div class="card">
+        <h3>Favicon</h3>
+        <p class="muted small">The tiny picture in the browser tab. Use a square picture. It is cut to a square automatically.</p>
+        <div class="asset-row"><div class="asset-prev fav" id="favPrev">none</div>
+          <div class="grow"><input type="file" id="favFile" accept="image/*" hidden>
+            <button class="btn small-btn" id="favPick" type="button">📷 Upload favicon</button>
+            <button class="btn ghost small-btn del-btn" id="favDel" type="button">Remove</button></div></div>
+      </div>
+
+      <div class="card">
+        <h3>Logo</h3>
+        <p class="muted small">Shown at the top-left of the website instead of the word "Anu". A picture with a see-through background (PNG) looks best.</p>
+        <div class="asset-row"><div class="asset-prev logo" id="logoPrev">none</div>
+          <div class="grow"><input type="file" id="logoFile" accept="image/*" hidden>
+            <button class="btn small-btn" id="logoPick" type="button">📷 Upload logo</button>
+            <button class="btn ghost small-btn del-btn" id="logoDel" type="button">Remove</button></div></div>
+      </div>
+
+      <div class="card">
+        <h3>Show or hide parts of the website</h3>
+        <p class="muted small">Nothing is deleted, it is only hidden.</p>
+        <div class="list" id="sectionList"></div>
+      </div>
+
+      <details class="card help">
+        <summary><h3 style="display:inline">Help in plain words</h3></summary>
+        <h3>Add photos to a place</h3><p>Go to <b>Photos</b>. Each box has a name, like "Main gallery" or "Spotlight". Tap <b>Add photos</b> inside the box you want.</p>
+        <h3>Hide a photo or a whole place</h3><p>Tap 👁 under a photo to hide it. To hide a whole box, use its <b>Show on website</b> switch.</p>
+        <h3>I deleted something by mistake</h3><p>Open <b>Trash</b> and tap <b>Restore</b>.</p>
+        <h3>Chat</h3><p>Visitors see a chat bubble. Their messages appear in <b>Chat</b>. Tap a message to react with any emoji, or ✏ to edit your own messages.</p>
+        <h3>Security</h3><p>Open <b>Security</b> to turn on the face lock, see where you are signed in and sign other devices out.</p>
+      </details>
     </section>
 
     <!-- TRASH -->
     <section id="tab-trash" class="tabpane" hidden>
       <header class="head"><h2>Trash</h2><p class="muted">Deleted something by accident? Bring it back here.</p></header>
       <div class="card">
-        <div class="row" style="justify-content:space-between;align-items:center">
-          <h3>Photos <span class="count" id="countTrashPhotos"></span></h3>
-        </div>
+        <h3>Photos <span class="count" id="countTrashPhotos"></span></h3>
         <div class="grid" id="trashPhotos"></div>
       </div>
       <div class="card">
@@ -159,22 +218,33 @@
       </div>
     </section>
 
-    <!-- HELP -->
-    <section id="tab-help" class="tabpane" hidden>
-      <header class="head"><h2>Help</h2><p class="muted">Everything in plain words.</p></header>
-      <div class="card help">
-        <h3>Add photos to a place</h3>
-        <p>Go to <b>Photos</b>. Each box has a name, like "Main gallery" or "Spotlight". Tap <b>Add photos</b> inside the box you want and pick pictures from your phone.</p>
-        <h3>Hide a photo or a whole place</h3>
-        <p>Tap the 👁 button under a photo to hide it. To hide a whole box, use its <b>Show on website</b> switch, or go to the <b>Show</b> tab to switch any part of the website on or off.</p>
-        <h3>Hide or move many photos</h3>
-        <p>Tick the small boxes on several photos. A bar appears at the bottom to hide, show, move or delete them all at once.</p>
-        <h3>I deleted something by mistake</h3>
-        <p>Open <b>Trash</b> and tap <b>Restore</b>. Nothing is gone until you delete it forever.</p>
-        <h3>Chat</h3>
-        <p>Visitors see a chat bubble on the website. Their messages appear in the <b>Chat</b> tab and you can reply there. Tap "Turn on alerts" to get a sound and a pop-up.</p>
-        <h3>Tip</h3>
-        <p>Add this page to your phone's home screen so it opens like an app.</p>
+    <!-- SECURITY -->
+    <section id="tab-security" class="tabpane" hidden>
+      <header class="head"><h2>Security</h2><p class="muted">Every time you sign in you pass 3 checks: <b>email</b>, <b>password</b> and, when it is on, the <b>face lock</b>. You are signed out after 10 minutes of no activity.</p></header>
+
+      <div class="card">
+        <h3>Face lock <span class="count" id="faceState">off</span></h3>
+        <p class="muted small">After your email and password, the camera asks you to look straight, then turn your head left and right. It is an extra lock, not a replacement for your password. The camera picture is never saved, only a small face "fingerprint".</p>
+        <div class="row">
+          <button class="btn" id="faceSetup" type="button">Set up face lock</button>
+          <button class="btn ghost" id="faceTest" type="button" hidden>Test it</button>
+          <button class="btn ghost del-btn" id="faceOff" type="button" hidden>Turn off</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>Where you are signed in <span class="count" id="countDevices"></span></h3>
+        <p class="muted small">Sign out any device you do not recognise. It loses access right away.</p>
+        <div class="list" id="deviceList"></div>
+        <div class="row">
+          <button class="btn ghost del-btn" id="signOutOthers" type="button">Sign out all other devices</button>
+          <button class="btn ghost" id="refreshDevices" type="button">↻ Refresh</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>Login history</h3>
+        <div class="list" id="historyList"></div>
       </div>
     </section>
 
@@ -196,6 +266,7 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
 <script src="config.js"></script>
 <script src="icons.js"></script>
+<script src="face.js"></script>
 <script src="admin.js"></script>
 </body>
 </html>
