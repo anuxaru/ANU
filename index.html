@@ -41,7 +41,7 @@
 
 <main id="top">
   <!-- ============ HERO ============ -->
-  <section class="hero">
+  <section class="hero" data-section="hero">
     <div class="hero-text">
       <p class="eyebrow">January 9 · my favourite day of the year</p>
       <h1 class="hero-title"><span class="script">Anamika</span><em>“Anu”</em></h1>
@@ -66,21 +66,20 @@
   </section>
 
   <!-- ============ MARQUEE ============ -->
-  <div class="marquee" aria-hidden="true"><div class="mq-track" id="mq"></div></div>
+  <div class="marquee" aria-hidden="true" data-section="marquee"><div class="mq-track" id="mq"></div></div>
 
   <!-- ============ GALLERY ============ -->
-  <section id="gallery" class="section">
+  <section id="gallery" class="section" data-section="gallery">
     <p class="eyebrow center">The gallery</p>
     <h2 class="h2">Every version of <span class="script">you</span></h2>
     <p class="sub center">Pick a style. Tap any photo to open it, swipe to see the next one, and double-tap to leave a heart.</p>
 
     <div class="switch" role="tablist" aria-label="Gallery style" id="switch">
+      <button role="tab" data-mode="heart">Heart</button>
+      <button role="tab" data-mode="cover">3D Carousel</button>
       <button role="tab" data-mode="masonry">Masonry</button>
       <button role="tab" data-mode="polaroid">Polaroids</button>
-      <button role="tab" data-mode="bento">Bento</button>
-      <button role="tab" data-mode="cover">3D Carousel</button>
       <button role="tab" data-mode="film">Film Roll</button>
-      <button role="tab" data-mode="heart">Heart</button>
     </div>
 
     <div id="stage" class="stage"></div>
@@ -91,22 +90,30 @@
     </div>
   </section>
 
+  <!-- ============ SPOTLIGHT ============ -->
+  <section id="spotlight" class="section" data-section="spotlight" hidden>
+    <p class="eyebrow center">Spotlight</p>
+    <h2 class="h2">Just <span class="script">you</span></h2>
+    <div class="spot" id="spotStage"></div>
+    <div class="sp-dots" id="spotDots"></div>
+  </section>
+
   <!-- ============ COLLAGES ============ -->
-  <section class="section">
+  <section class="section" data-section="collage">
     <p class="eyebrow center">The originals</p>
     <h2 class="h2">The <span class="script">collages</span></h2>
     <div class="collages" id="collages"></div>
   </section>
 
   <!-- ============ REASONS ============ -->
-  <section id="reasons" class="section">
+  <section id="reasons" class="section" data-section="reasons">
     <p class="eyebrow center">Tap a card to flip it</p>
     <h2 class="h2">Little <span class="script">reasons</span></h2>
     <div class="reasons" id="reasonGrid"></div>
   </section>
 
   <!-- ============ PICK-UP LINES ============ -->
-  <section id="lines" class="section">
+  <section id="lines" class="section" data-section="lines">
     <div class="lines">
       <p class="eyebrow center">Warning: extremely cheesy</p>
       <h2 class="h2">Lines for <span class="script">Anu</span></h2>
@@ -116,7 +123,7 @@
   </section>
 
   <!-- ============ LETTER ============ -->
-  <section id="letter" class="section">
+  <section id="letter" class="section" data-section="letter">
     <article class="letter">
       <span class="stamp" aria-hidden="true"><img src="img/p13.jpg" alt="" width="224" height="276" loading="lazy"></span>
       <p class="script salute">Dear Anu,</p>
@@ -128,13 +135,13 @@
   </section>
 
   <!-- ============ BLOG ============ -->
-  <section id="blog" class="section">
+  <section id="blog" class="section" data-section="blog">
     <p class="eyebrow center">Little stories</p>
     <h2 class="h2">From my <span class="script">heart</span></h2>
     <div class="blog-grid" id="blogGrid"></div>
   </section>
 
-  <section class="finale">
+  <section class="finale" data-section="finale">
     <h2 class="script">Happy Birthday, Anu</h2>
     <p>January 9 is your day, so go and shine like the star you are.</p>
     <button class="btn" id="partyBtn">Celebrate</button>
@@ -142,7 +149,7 @@
 </main>
 
 <footer>
-  <div class="socials" id="socials" aria-label="Social links"></div>
+  <div class="socials" id="socials" aria-label="Social links" data-section="socials"></div>
   made with ♡ only for Anamika “Anu” · January 9
 </footer>
 
@@ -169,7 +176,26 @@
   <button class="lb-arrow next round" id="lbNext" aria-label="Next">›</button>
 </div>
 
+<!-- ============ LIVE CHAT ============ -->
+<div id="chat" data-section="chat" hidden>
+  <button class="chat-fab" id="chatFab" aria-label="Chat with me" aria-expanded="false">
+    <span class="ico" id="chatIco"></span><span class="dot" id="chatDot" hidden>1</span>
+  </button>
+  <section class="chat-panel" id="chatPanel" role="dialog" aria-label="Chat" hidden>
+    <div class="chat-head"><div style="flex:1"><b>Chat with me</b><small>Send a message, I will reply here ♡</small></div>
+      <button class="chat-x" id="chatClose" aria-label="Close chat">×</button></div>
+    <div class="chat-log" id="chatLog" aria-live="polite"></div>
+    <form class="chat-form" id="chatForm">
+      <input type="text" id="chatName" placeholder="Your name (optional)" maxlength="40" autocomplete="given-name">
+      <div class="chat-row"><textarea id="chatText" placeholder="Write a message..." maxlength="1000" rows="1" required></textarea>
+        <button class="chat-send" type="submit" aria-label="Send">➤</button></div>
+      <p class="chat-note" id="chatNote"></p>
+    </form>
+  </section>
+</div>
+
 <script src="config.js"></script>
+<script src="icons.js"></script>
 <script src="app.js" defer></script>
 
 </body></html>

@@ -46,6 +46,9 @@
       <button data-tab="photos" class="on"><i>🖼</i><span>Photos</span></button>
       <button data-tab="blog"><i>📝</i><span>Blog</span></button>
       <button data-tab="social"><i>🔗</i><span>Social</span></button>
+      <button data-tab="chat"><i>💬</i><span>Chat</span><b class="badge" id="chatBadge" hidden>0</b></button>
+      <button data-tab="sections"><i>👁</i><span>Show</span></button>
+      <button data-tab="trash"><i>🗑</i><span>Trash</span></button>
       <button data-tab="help"><i>💡</i><span>Help</span></button>
     </nav>
     <div class="side-foot">
@@ -58,39 +61,8 @@
 
     <!-- PHOTOS -->
     <section id="tab-photos" class="tabpane">
-      <header class="head"><h2>Photos</h2><p class="muted">Add pictures to the gallery. They show up on the website straight away.</p></header>
-
-      <div class="card">
-        <h3>1. Add new photos</h3>
-        <div class="row">
-          <label class="grow">Where should they go?
-            <select id="photoSection"><option value="gallery">Gallery</option><option value="collage">Collages</option></select>
-          </label>
-        </div>
-        <div class="drop" id="drop">
-          <input type="file" id="fileInput" accept="image/*" multiple hidden>
-          <button class="btn" id="pickBtn" type="button">📷 Choose photos from my phone or computer</button>
-          <p class="muted small">You can pick many at once. Big photos are made smaller automatically.</p>
-          <div class="progress" id="progress" hidden><i id="progressBar"></i></div>
-        </div>
-        <details class="alt">
-          <summary>Or add a photo using an image link</summary>
-          <div class="row wrap">
-            <label class="grow">Image link<input type="url" id="linkUrl" placeholder="https://example.com/photo.jpg"></label>
-            <label class="grow">Caption<input type="text" id="linkCap" placeholder="A few sweet words"></label>
-            <button class="btn" id="linkAdd" type="button">Add</button>
-          </div>
-        </details>
-      </div>
-
-      <div class="card">
-        <h3>2. Your photos <span class="count" id="countPhotos"></span></h3>
-        <p class="muted small">Edit a caption and tap outside the box to save. Use the arrows to change the order.</p>
-        <h4>Gallery</h4>
-        <div class="grid" id="gridGallery"></div>
-        <h4>Collages</h4>
-        <div class="grid" id="gridCollage"></div>
-      </div>
+      <header class="head"><h2>Photos</h2><p class="muted">Each box below is one place on your website. Add photos straight into the place you want.</p></header>
+      <div id="areas"></div>
     </section>
 
     <!-- BLOG -->
@@ -126,13 +98,64 @@
 
     <!-- SOCIAL -->
     <section id="tab-social" class="tabpane" hidden>
-      <header class="head"><h2>Social links</h2><p class="muted">Paste a link for each place you want to show. Leave a box empty to hide it.</p></header>
+      <header class="head"><h2>Social links</h2><p class="muted">Paste a link next to each icon. Leave a box empty to hide it. The icons use your website's colours.</p></header>
       <div class="card">
         <div class="social-grid" id="socialGrid"></div>
         <h4>More links</h4>
+        <p class="muted small">Pick an icon, give it a name and paste the link.</p>
         <div id="customList" class="list"></div>
         <button class="btn ghost" id="customAdd" type="button">＋ Add another link</button>
         <div class="row"><button class="btn" id="socialSave" type="button">Save social links</button></div>
+      </div>
+    </section>
+
+    <!-- CHAT -->
+    <section id="tab-chat" class="tabpane" hidden>
+      <header class="head"><h2>Chat</h2><p class="muted">Messages your visitors send from the chat bubble on the website. New messages appear here instantly.</p></header>
+      <div class="card notify">
+        <div><b>Get alerted for new messages</b><p class="muted small" id="notifyState">Keep this page open (a tab in the background is fine) to hear a sound and see an alert.</p></div>
+        <button class="btn ghost small-btn" id="notifyBtn" type="button">🔔 Turn on alerts</button>
+      </div>
+      <div class="chat-wrap" id="chatWrap">
+        <div class="card conv-list" id="convList"></div>
+        <div class="card thread" id="thread" hidden>
+          <div class="thread-head">
+            <button class="ic back" id="threadBack" aria-label="Back to all chats">‹</button>
+            <b id="threadName">Visitor</b>
+            <button class="ic del" id="threadDel" aria-label="Delete this chat">🗑</button>
+          </div>
+          <div class="thread-log" id="threadLog"></div>
+          <form class="thread-form" id="replyForm">
+            <textarea id="replyText" rows="2" placeholder="Write a reply..." maxlength="1000" required></textarea>
+            <button class="btn" type="submit">Send</button>
+          </form>
+        </div>
+      </div>
+    </section>
+
+    <!-- SHOW / HIDE -->
+    <section id="tab-sections" class="tabpane" hidden>
+      <header class="head"><h2>Show or hide</h2><p class="muted">Switch any part of the website on or off. Nothing is deleted, it is only hidden.</p></header>
+      <div class="card"><div class="list" id="sectionList"></div></div>
+    </section>
+
+    <!-- TRASH -->
+    <section id="tab-trash" class="tabpane" hidden>
+      <header class="head"><h2>Trash</h2><p class="muted">Deleted something by accident? Bring it back here.</p></header>
+      <div class="card">
+        <div class="row" style="justify-content:space-between;align-items:center">
+          <h3>Photos <span class="count" id="countTrashPhotos"></span></h3>
+        </div>
+        <div class="grid" id="trashPhotos"></div>
+      </div>
+      <div class="card">
+        <h3>Blog posts <span class="count" id="countTrashPosts"></span></h3>
+        <div class="list" id="trashPosts"></div>
+      </div>
+      <div class="card">
+        <h3>Empty the trash</h3>
+        <p class="muted small">This removes everything in the trash forever. It cannot be undone.</p>
+        <button class="btn ghost del-btn" id="emptyTrash" type="button">Delete everything in the trash forever</button>
       </div>
     </section>
 
@@ -140,14 +163,16 @@
     <section id="tab-help" class="tabpane" hidden>
       <header class="head"><h2>Help</h2><p class="muted">Everything in plain words.</p></header>
       <div class="card help">
-        <h3>Add photos from my phone</h3>
-        <p>Go to <b>Photos</b>, choose Gallery or Collages, then tap <b>Choose photos</b>. Pick pictures from your phone and wait for the bar to finish.</p>
-        <h3>Change a caption or the order</h3>
-        <p>Type in the caption box under any photo and tap outside it. Use ◀ ▶ to move it. Use 🗑 to delete it.</p>
-        <h3>Write a blog post</h3>
-        <p>Go to <b>Blog</b>, fill the title, add a story and/or a link, add a cover image, then <b>Save post</b>.</p>
-        <h3>Add social media</h3>
-        <p>Go to <b>Social</b>, paste your profile links, then press <b>Save social links</b>. Icons appear at the bottom of the website.</p>
+        <h3>Add photos to a place</h3>
+        <p>Go to <b>Photos</b>. Each box has a name, like "Main gallery" or "Spotlight". Tap <b>Add photos</b> inside the box you want and pick pictures from your phone.</p>
+        <h3>Hide a photo or a whole place</h3>
+        <p>Tap the 👁 button under a photo to hide it. To hide a whole box, use its <b>Show on website</b> switch, or go to the <b>Show</b> tab to switch any part of the website on or off.</p>
+        <h3>Hide or move many photos</h3>
+        <p>Tick the small boxes on several photos. A bar appears at the bottom to hide, show, move or delete them all at once.</p>
+        <h3>I deleted something by mistake</h3>
+        <p>Open <b>Trash</b> and tap <b>Restore</b>. Nothing is gone until you delete it forever.</p>
+        <h3>Chat</h3>
+        <p>Visitors see a chat bubble on the website. Their messages appear in the <b>Chat</b> tab and you can reply there. Tap "Turn on alerts" to get a sound and a pop-up.</p>
         <h3>Tip</h3>
         <p>Add this page to your phone's home screen so it opens like an app.</p>
       </div>
@@ -156,10 +181,21 @@
   </main>
 </div>
 
+<!-- bulk actions for selected photos -->
+<div id="bulk" class="bulk" hidden>
+  <b id="bulkCount">0 selected</b>
+  <button class="btn ghost small-btn" data-bulk="hide">Hide</button>
+  <button class="btn ghost small-btn" data-bulk="show">Show</button>
+  <select id="bulkMove" aria-label="Move selected photos to"><option value="">Move to…</option></select>
+  <button class="btn ghost small-btn del-btn" data-bulk="trash">Trash</button>
+  <button class="link" data-bulk="clear">Clear</button>
+</div>
+
 <div id="toast" role="status" aria-live="polite"></div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
 <script src="config.js"></script>
+<script src="icons.js"></script>
 <script src="admin.js"></script>
 </body>
 </html>
