@@ -275,3 +275,13 @@ details.card[open]>summary{margin-bottom:10px}
 .edit-row{display:flex;gap:8px;justify-content:flex-end;margin-top:8px}
 .edit-row button{border:0;border-radius:99px;padding:9px 18px;font-weight:500;cursor:pointer}
 .eb-cancel{background:var(--blush);color:var(--ink)}.eb-save{background:var(--rose);color:#fff}
+
+/* ===== delete + phone alerts ===== */
+.mm-acts .mm-del{color:#d6455a}
+.bub.deleted{opacity:.6;text-decoration:line-through;text-decoration-color:rgba(255,255,255,.5)}
+.bub.deleted small{text-decoration:none;display:block}
+.alerts h4{margin-top:22px}
+.alerts .row{margin:10px 0}
+.alerts label.check{margin-bottom:8px}
+.howto{padding-left:20px;margin:8px 0}.howto li{margin-bottom:4px}
+.alerts details.alt{margin:8px 0 12px}

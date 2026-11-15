@@ -671,6 +671,6 @@ if (P.length) setMode(mode); else hideSection($("#gallery"));
 observe($$(".h2, .lines, .letter, .finale h2"));
 // hide menu links that point to a hidden section
 $$(".nav nav a").forEach(a => { const s = $(a.getAttribute("href")); if (s && s.hidden) a.hidden = true; });
-window.ANU_READY = {SECTIONS, store};
+window.ANU_READY = {SECTIONS, store, SETTINGS};
 document.dispatchEvent(new Event("anu-ready"));
 })();

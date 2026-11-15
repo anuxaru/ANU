@@ -23,6 +23,15 @@ function start(ctx) {
   }
   nameIn.value = store.get("anu-chat-name") || "";
 
+  // optional "message me on WhatsApp" link (shown only when switched on in the admin panel)
+  const waNum = ctx.SETTINGS && ctx.SETTINGS.whatsapp;
+  if (/^\d{8,15}$/.test(waNum || "")) {
+    const a = document.createElement("a"); a.className = "chat-wa"; a.target = "_blank"; a.rel = "noopener noreferrer";
+    a.href = "https://wa.me/" + waNum + "?text=" + encodeURIComponent("Hi! I found you on your website ♡");
+    a.textContent = "💬 Prefer WhatsApp? Message me there";
+    form.append(a);
+  }
+
   let msgs = [], adminTyping = false, open = false, seen = +(store.get("anu-chat-seen") || 0), timer = 0, busy = false, lastSig = "", lastPing = 0;
   let editingId = null, menuMsg = null;
 
@@ -150,8 +159,20 @@ function start(ctx) {
       try { await navigator.clipboard.writeText(m.body); note.textContent = "Copied"; } catch (e) { note.textContent = "Could not copy"; }
       closeMenu(); setTimeout(() => { if (note.textContent === "Copied") note.textContent = ""; }, 1500);
     });
-    acts.append(cp); menu.append(acts);
+    acts.append(cp);
+    if (m.sender === "visitor") {
+      const del = document.createElement("button"); del.type = "button"; del.className = "mm-del"; del.textContent = "🗑  Delete";
+      del.addEventListener("click", () => { closeMenu(); removeMessage(m); }); acts.append(del);
+    }
+    menu.append(acts);
     menu._anchor = anchor; menu.hidden = false; placeMenu(anchor);
+  }
+  async function removeMessage(m) {
+    if (!confirm("Delete this message? It will disappear from your chat.")) return;
+    const keep = msgs.slice();
+    msgs = msgs.filter(x => x.id !== m.id); lastSig = ""; draw();
+    try { await rpc("chat_delete", { p_token: token, p_message_id: m.id }); note.textContent = ""; pull(); }
+    catch (err) { msgs = keep; note.textContent = err.message || "Could not delete"; draw(); }
   }
   function placeMenu(anchor) {
     const c = panel.getBoundingClientRect(), a = anchor.getBoundingClientRect(), mw = menu.offsetWidth, mh = menu.offsetHeight;
@@ -177,8 +198,10 @@ function start(ctx) {
   log.addEventListener("scroll", () => { if (!menu.hidden && menu._anchor && menu._anchor.isConnected) placeMenu(menu._anchor); else if (!menu.hidden) closeMenu(); }, { passive: true });
 
   /* ---------- talking to the database ---------- */
+  let again = false;
   async function pull() {
-    if (busy) return; busy = true;
+    if (busy) { again = true; return; }       // a refresh is already running: run one more right after it (so a change is never overwritten by an older answer)
+    busy = true;
     try {
       const r = await rpc("chat_poll", { p_token: token, p_open: open });
       const rows = (r && r.messages) || [];
@@ -190,6 +213,7 @@ function start(ctx) {
       updateDot();
     } catch (e) { /* offline: try again later */ }
     busy = false;
+    if (again) { again = false; pull(); }
   }
   function schedule() {
     clearTimeout(timer);

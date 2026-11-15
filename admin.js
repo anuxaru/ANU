@@ -163,8 +163,9 @@ $("#claimBtn").addEventListener("click", async () => {
 
 function enterApp() {
   entered = true; show("viewApp"); lastAct = Date.now(); ticks = 0;
-  loadAll(); startRealtime(); loadSecurity(); loadSettings();
+  loadAll(); startRealtime(); loadSecurity(); loadSettings().then(loadAlerts);
   clearInterval(tickTimer); tickTimer = setInterval(tick, 1000);
+  if (location.hash === "#chat") goTab("chat");            // opened from a phone alert
 }
 async function tick() {
   const idle = Date.now() - lastAct;
@@ -758,9 +759,9 @@ function drawThread(forceBottom) {
     const mine = m.sender === "admin";
     const row = document.createElement("div"); row.className = "brow " + (mine ? "me" : "them"); row.dataset.id = m.id;
     if (editingMsg === m.id) { row.append(editBox(m)); log.append(row); return; }
-    const b = document.createElement("div"); b.className = "bub " + (mine ? "me" : "them"); b.textContent = m.body;
+    const b = document.createElement("div"); b.className = "bub " + (mine ? "me" : "them") + (m.deleted_at ? " deleted" : ""); b.textContent = m.body;
     b.tabIndex = 0; b.setAttribute("role", "button"); b.setAttribute("aria-label", "Message options");
-    const s = document.createElement("small"); s.textContent = fmtTime(m.created_at) + (m.edited_at ? " · edited" : ""); b.append(s);
+    const s = document.createElement("small"); s.textContent = fmtTime(m.created_at) + (m.edited_at ? " · edited" : "") + (m.deleted_at ? " · deleted by the visitor" : ""); b.append(s);
     const pick = () => openMenu(m, b);
     b.addEventListener("click", pick); b.addEventListener("keydown", e => { if (e.key === "Enter") pick(); });
     row.append(b);
@@ -855,8 +856,19 @@ function openMenu(m, anchor) {
   }
   const cp = document.createElement("button"); cp.type = "button"; cp.textContent = "📋  Copy";
   cp.addEventListener("click", async () => { try { await navigator.clipboard.writeText(m.body); toast("Copied"); } catch (e) { toast("Could not copy", true); } closePop(); });
-  acts.append(cp); menu.append(acts);
+  acts.append(cp);
+  const del = document.createElement("button"); del.type = "button"; del.className = "mm-del"; del.textContent = m.deleted_at ? "🗑  Delete for good" : "🗑  Delete";
+  del.addEventListener("click", () => { closePop(); deleteMessage(m); }); acts.append(del);
+  menu.append(acts);
   menu._anchor = anchor; menu.hidden = false; placeMenu(anchor);
+}
+async function deleteMessage(m) {
+  const mine = m.sender === "admin";
+  if (!confirm(mine ? "Delete this message for everyone? The visitor will not see it any more. This cannot be undone."
+                    : "Delete this message from your records? This cannot be undone.")) return;
+  const { error } = await db.from("messages").delete().eq("id", m.id);
+  if (error) return fail(error);
+  thread = thread.filter(x => x.id !== m.id); drawThread(); loadConvs(); toast("Message deleted");
 }
 async function react(m, e) {
   closePop();
@@ -891,8 +903,12 @@ function startRealtime() {
     })
     .on("postgres_changes", { event: "UPDATE", schema: "public", table: "messages" }, p => {
       const m = thread.find(x => x.id === p.new.id);
-      if (m && editingMsg !== m.id) { Object.assign(m, { body: p.new.body, edited_at: p.new.edited_at, read: p.new.read, read_at: p.new.read_at }); drawThread(); }
+      if (m && editingMsg !== m.id) { Object.assign(m, { body: p.new.body, edited_at: p.new.edited_at, read: p.new.read, read_at: p.new.read_at, deleted_at: p.new.deleted_at }); drawThread(); }
       if (p.new.conversation_id) loadConvs();
+    })
+    .on("postgres_changes", { event: "DELETE", schema: "public", table: "messages" }, p => {
+      if (p.old && p.old.id && thread.some(x => x.id === p.old.id)) { thread = thread.filter(x => x.id !== p.old.id); if (editingMsg === null) drawThread(); }
+      loadConvs();
     })
     .on("postgres_changes", { event: "UPDATE", schema: "public", table: "conversations" }, p => {
       const c = convs.find(x => x.id === p.new.id); if (!c) { loadConvs(); return; }
@@ -903,14 +919,79 @@ function startRealtime() {
     })
     .subscribe();
 }
-function notifyState() {
-  const st = $("#notifyState"), b = $("#notifyBtn");
-  if (!("Notification" in window)) { st.textContent = "This browser cannot show pop-up alerts, but you will still hear a sound while this page is open."; b.hidden = true; return; }
-  if (Notification.permission === "granted") { st.textContent = "Alerts are on. You get a sound and a pop-up for each new message while this page is open."; b.hidden = true; }
-  else if (Notification.permission === "denied") { st.textContent = "Alerts are blocked in your browser settings. You still hear a sound while this page is open."; b.hidden = true; }
+/* =====================================================================
+   PHONE ALERTS + WHATSAPP
+   ===================================================================== */
+const b64ToU8 = s => { const p = "=".repeat((4 - s.length % 4) % 4), r = atob((s + p).replace(/-/g, "+").replace(/_/g, "/")); return Uint8Array.from([...r].map(c => c.charCodeAt(0))); };
+const isIOS = /iPhone|iPad|iPod/.test(navigator.userAgent), standalone = !!navigator.standalone || matchMedia("(display-mode: standalone)").matches;
+const normalizePhone = v => { const d = String(v || "").replace(/\D/g, ""); if (!d) return ""; return d.startsWith("880") ? d : d.startsWith("0") ? "880" + d.slice(1) : d; };   // 01306-993620 -> 8801306993620
+const showPhone = d => d && d.startsWith("880") ? "0" + d.slice(3, 7) + "-" + d.slice(7) : (d || "");
+let alertCfg = null;
+async function loadAlerts() {
+  const { data } = await db.rpc("get_notify_settings"); if (!data) return; alertCfg = data;
+  $("#alertDevices").textContent = data.devices + (data.devices === 1 ? " device" : " devices");
+  $("#waPhone").value = showPhone(data.wa_phone);
+  $("#waKeyState").textContent = data.wa_has_key ? " A key is saved. Leave empty to keep it." : " No key saved yet.";
+  $("#waOn").checked = !!data.wa_enabled; $("#waBtn").checked = !!settings.whatsapp;
+  await refreshPushState();
 }
-$("#notifyBtn").addEventListener("click", async () => { try { await Notification.requestPermission(); } catch (e) { /* ignore */ } notifyState(); });
-notifyState();
+async function currentSub() {
+  if (!("serviceWorker" in navigator) || !("PushManager" in window)) return null;
+  const reg = await navigator.serviceWorker.getRegistration(); return reg ? reg.pushManager.getSubscription() : null;
+}
+async function refreshPushState() {
+  const st = $("#pushState"), on = $("#pushOn"), off = $("#pushOff");
+  const can = "serviceWorker" in navigator && "PushManager" in window && "Notification" in window;
+  if (!can) {
+    st.textContent = isIOS && !standalone ? "On iPhone, first add this page to your Home Screen (see the steps below), then open it from there." : "This browser cannot show phone alerts.";
+    on.disabled = true; off.hidden = true; return;
+  }
+  if (Notification.permission === "denied") { st.textContent = "Alerts are blocked for this site. Allow notifications in your browser settings, then reload."; on.disabled = true; off.hidden = true; return; }
+  const sub = await currentSub();
+  on.disabled = false; on.hidden = !!sub; off.hidden = !sub;
+  st.textContent = sub ? "✓ Alerts are on for this device." : "Alerts are off on this device.";
+}
+$("#pushOn").addEventListener("click", async () => {
+  const b = $("#pushOn"); b.disabled = true;
+  try {
+    const perm = await Notification.requestPermission(); if (perm !== "granted") throw new Error("Notifications were not allowed.");
+    const pub = (alertCfg && alertCfg.vapid_public) || settings.vapid_public; if (!pub) throw new Error("Alerts are not ready yet. Try again in a minute.");
+    const reg = await navigator.serviceWorker.register("sw.js"); await navigator.serviceWorker.ready;
+    let sub = await reg.pushManager.getSubscription();
+    if (!sub) sub = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: b64ToU8(pub) });
+    const j = sub.toJSON();
+    const { error } = await db.from("push_subscriptions").upsert({ endpoint: j.endpoint, p256dh: j.keys.p256dh, auth: j.keys.auth, user_agent: navigator.userAgent });
+    if (error) throw error;
+    toast("Alerts are on ♡");
+  } catch (e) { fail(e); }
+  b.disabled = false; loadAlerts();
+});
+$("#pushOff").addEventListener("click", async () => {
+  try {
+    const sub = await currentSub();
+    if (sub) { await db.from("push_subscriptions").delete().eq("endpoint", sub.endpoint); await sub.unsubscribe(); }
+    toast("Alerts are off on this device");
+  } catch (e) { fail(e); }
+  loadAlerts();
+});
+async function sendTest() {
+  const { data, error } = await db.rpc("notify_test"); if (error || !data) return fail(error || new Error("Could not send the test"));
+  toast("Test sent. It should arrive in a few seconds.");
+}
+$("#pushTest").addEventListener("click", sendTest);
+$("#waTest").addEventListener("click", sendTest);
+$("#waSave").addEventListener("click", async () => {
+  const phone = normalizePhone($("#waPhone").value), key = $("#waKey").value.trim(), on = $("#waOn").checked;
+  if (on && !phone) return toast("Enter your WhatsApp number first", true);
+  if (on && !key && !(alertCfg && alertCfg.wa_has_key)) return toast("Paste your CallMeBot key first (see the steps above)", true);
+  try {
+    const { data, error } = await db.rpc("set_notify_settings", { p_phone: phone, p_key: key, p_enabled: on });
+    if (error || !data) throw error || new Error("Could not save");
+    await saveSetting("whatsapp", $("#waBtn").checked && phone ? phone : "");
+    $("#waKey").value = ""; toast("WhatsApp settings saved ♡");
+  } catch (e) { fail(e); }
+  loadAlerts();
+});
 
 /* =====================================================================
    SECURITY: face lock, devices, login history

@@ -6,6 +6,12 @@
 <meta name="robots" content="noindex,nofollow">
 <meta name="theme-color" content="#c2456b">
 <title>Anu Admin</title>
+<link rel="manifest" href="admin.webmanifest">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="icon" type="image/png" href="icons/icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Anu Admin">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600&family=Jost:wght@300;400;500&family=Pinyon+Script&display=swap" rel="stylesheet">
@@ -131,9 +137,31 @@
     <!-- CHAT -->
     <section id="tab-chat" class="tabpane" hidden>
       <header class="head"><h2>Chat</h2><p class="muted">Every chat is saved here. New messages, typing and reactions appear instantly.</p></header>
-      <div class="card notify">
-        <div><b>Get alerted for new messages</b><p class="muted small" id="notifyState">Keep this page open (a tab in the background is fine) to hear a sound and see an alert.</p></div>
-        <button class="btn ghost small-btn" id="notifyBtn" type="button">🔔 Turn on alerts</button>
+      <div class="card alerts">
+        <h3>Phone alerts <span class="count" id="alertDevices">0 devices</span></h3>
+        <p class="muted small">Get a notification on your phone every time someone writes to you, even when this page is closed.</p>
+        <div class="row">
+          <button class="btn small-btn" id="pushOn" type="button">🔔 Turn on alerts on this device</button>
+          <button class="btn ghost small-btn" id="pushTest" type="button">Send a test alert</button>
+          <button class="btn ghost small-btn del-btn" id="pushOff" type="button" hidden>Turn off here</button>
+        </div>
+        <p class="muted small" id="pushState"></p>
+        <details class="alt"><summary>How to get alerts on an iPhone</summary>
+          <ol class="muted small howto"><li>Open this admin page in <b>Safari</b>.</li><li>Tap the Share button, then <b>Add to Home Screen</b>.</li><li>Open <b>Anu Admin</b> from your Home Screen (not Safari).</li><li>Open the <b>Chat</b> tab and tap <b>Turn on alerts on this device</b>, then allow notifications.</li></ol>
+          <p class="muted small">Android: just tap the button above in Chrome and allow notifications.</p>
+        </details>
+
+        <h4>WhatsApp</h4>
+        <p class="muted small">Also forward each new message to your WhatsApp. This uses the free <b>CallMeBot</b> service, so your number and the message text pass through it. It is off until you switch it on.</p>
+        <label>Your WhatsApp number<input type="text" id="waPhone" inputmode="tel" placeholder="01306-993620" autocomplete="off"></label>
+        <label>CallMeBot key<input type="password" id="waKey" placeholder="Paste the key CallMeBot sends you" autocomplete="off"><small class="muted" id="waKeyState"></small></label>
+        <details class="alt"><summary>How do I get the key? (2 minutes)</summary>
+          <ol class="muted small howto"><li>On the WhatsApp number above, add the contact <b>+34 644 51 95 23</b> (CallMeBot).</li><li>Send it this message: <b>I allow callmebot to send me messages</b></li><li>It replies with your key. Paste the key above and save.</li></ol>
+        </details>
+        <label class="check"><input type="checkbox" id="waOn"> Forward new chat messages to my WhatsApp</label>
+        <label class="check"><input type="checkbox" id="waBtn"> Show a "Message me on WhatsApp" link in the website chat</label>
+        <p class="muted small">The last switch shows your number to everyone who opens the chat.</p>
+        <div class="row"><button class="btn" id="waSave" type="button">Save WhatsApp settings</button><button class="btn ghost" id="waTest" type="button">Send a WhatsApp test</button></div>
       </div>
       <div class="chat-wrap" id="chatWrap">
         <div class="card conv-list" id="convList"></div>

@@ -433,3 +433,6 @@ footer{position:relative;z-index:2;text-align:center;color:var(--soft);font-size
 .eb-cancel{background:var(--blush);color:var(--ink)}.eb-save{background:var(--rose);color:#fff}
 
 footer{padding-bottom:calc(92px + env(safe-area-inset-bottom))}
+.mm-acts .mm-del{color:#d6455a}
+.chat-wa{display:block;text-align:center;font-size:.82rem;color:var(--rose);text-decoration:none;padding:4px 0 2px}
+.chat-wa:hover{text-decoration:underline}

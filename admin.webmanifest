@@ -1,0 +1,14 @@
+{
+  "name": "Anu Admin",
+  "short_name": "Anu Admin",
+  "description": "Manage the website, read chats and get alerts.",
+  "start_url": "admin.html",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#16070e",
+  "theme_color": "#c2456b",
+  "icons": [
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ]
+}
