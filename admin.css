@@ -242,11 +242,6 @@ details.card[open]>summary{margin-bottom:10px}
 .thread-head .grow{display:flex;flex-direction:column;min-width:0}.thread-head small{font-size:.76rem;line-height:1.2}
 .brow{display:flex;flex-direction:column;gap:3px;max-width:92%}
 .brow.me{align-self:flex-end;align-items:flex-end}.brow.them{align-self:flex-start;align-items:flex-start}
-.bline{display:flex;align-items:flex-end;gap:4px}
-.bline .bub{max-width:100%}
-.bact{display:flex;gap:2px;opacity:.55;transition:opacity .2s}.bline:hover .bact,.bact:focus-within{opacity:1}
-@media(hover:none){.bact{opacity:1}}
-.bact .ic{flex:none;width:34px;min-height:34px;font-size:.9rem;border:0;background:transparent}
 .edit-box{width:min(420px,80vw)}.edit-box textarea{min-height:84px;margin:0 0 6px}
 .bub.typing-b{display:flex;gap:4px;padding:12px 14px;align-self:flex-start}
 .bub.typing-b i{width:7px;height:7px;border-radius:50%;background:var(--soft);opacity:.5;animation:typedot 1.1s infinite}
@@ -257,14 +252,26 @@ details.card[open]>summary{margin-bottom:10px}
 .rx.mine{border-color:var(--rose);background:var(--blush)}
 .seen{font-size:.72rem;color:var(--soft)}
 .thread{position:relative}
-.emo-btn{flex:none;width:46px;min-height:46px;font-size:1.3rem}
-.emo-pop{position:absolute;left:12px;right:12px;bottom:84px;z-index:6;background:var(--card);border:1px solid var(--line);border-radius:18px;
-  box-shadow:0 14px 40px rgba(0,0,0,.4);padding:12px;max-height:min(320px,50vh);overflow-y:auto}
-.emo-h{margin:0 0 6px;font:600 .78rem var(--sans);letter-spacing:.06em;text-transform:uppercase;color:var(--soft)}
-.emo-quick{display:flex;gap:6px;margin-bottom:8px}
-.emo-quick button{flex:1;font-size:1.4rem;background:var(--blush);border:0;border-radius:12px;min-height:44px;cursor:pointer}
-.emo-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(40px,1fr));gap:2px}
-.emo-grid button{border:0;background:none;font-size:1.45rem;min-height:40px;border-radius:10px;cursor:pointer}
-.emo-grid button:hover,.emo-grid button:active{background:var(--blush)}
-.emo-own{display:flex;gap:8px;margin-top:8px}.emo-own input{margin:0;flex:1;min-width:0}
-.emo-rm{display:block;width:100%;margin-top:8px;border:1px solid var(--line);background:none;border-radius:12px;padding:9px;color:var(--soft);cursor:pointer}
+
+/* ===== chat: tap a message (like Messenger) ===== */
+.msg-menu{position:absolute;z-index:7;width:max-content;max-width:calc(100% - 16px);background:var(--card);color:var(--ink);border:1px solid var(--line);
+  border-radius:22px;box-shadow:0 14px 40px rgba(0,0,0,.4);padding:8px}
+.msg-menu[hidden]{display:none}
+.mm-quick{display:flex;gap:2px;align-items:center}
+.mm-quick button{width:42px;height:42px;margin:0;padding:0;border:0;background:none;border-radius:50%;font-size:1.5rem;line-height:1;display:grid;place-items:center;cursor:pointer;transition:transform .15s,background .15s}
+.mm-quick button:hover{background:var(--blush);transform:scale(1.18)}
+.mm-quick button.on{background:var(--blush);box-shadow:inset 0 0 0 2px var(--rose)}
+.mm-quick .mm-plus{background:var(--blush);color:var(--soft);font:600 1.4rem/1 var(--sans)}
+.mm-own{display:flex;gap:6px;margin-top:6px}.mm-own[hidden]{display:none}
+.mm-own input{margin:0;flex:1;min-width:0;padding:10px 12px}
+.mm-own button{border:0;background:var(--rose);color:#fff;border-radius:12px;padding:0 14px;font-weight:500;cursor:pointer}
+.mm-acts{display:flex;flex-direction:column;margin-top:4px;border-top:1px solid var(--line);padding-top:4px}
+.mm-acts button{border:0;background:none;text-align:left;padding:10px 8px;border-radius:10px;color:var(--ink);font:500 .95rem var(--sans);white-space:pre;cursor:pointer}
+.mm-acts button:hover{background:var(--blush)}
+.bub{cursor:pointer}
+.edit-box{background:var(--card);border:1.5px solid var(--rose);border-radius:18px;padding:10px;width:min(360px,100%)}
+.edit-h{margin:0 0 6px;font:600 .72rem var(--sans);letter-spacing:.08em;text-transform:uppercase;color:var(--soft)}
+.edit-box textarea{margin:0;min-height:48px;resize:none;padding:9px 11px}
+.edit-row{display:flex;gap:8px;justify-content:flex-end;margin-top:8px}
+.edit-row button{border:0;border-radius:99px;padding:9px 18px;font-weight:500;cursor:pointer}
+.eb-cancel{background:var(--blush);color:var(--ink)}.eb-save{background:var(--rose);color:#fff}

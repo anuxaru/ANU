@@ -728,6 +728,27 @@ function headSub() {
   const c = convs.find(x => x.id === openId); if (!c) return;
   $("#threadSub").textContent = typingNow(c) ? "typing…" : c.visitor_seen_at ? "Last active " + ago(c.visitor_seen_at) : "";
 }
+/* edit one of your own messages: the bubble turns into a text box (like Messenger) */
+function editBox(m) {
+  const box = document.createElement("div"); box.className = "edit-box";
+  box.innerHTML = '<p class="edit-h">Edit message</p><textarea rows="2" maxlength="1000" aria-label="Edit your message"></textarea>' +
+                  '<div class="edit-row"><button type="button" class="eb-cancel">Cancel</button><button type="button" class="eb-save">Save</button></div>';
+  const ta = $("textarea", box); ta.value = m.body;
+  const grow = () => { ta.style.height = "auto"; ta.style.height = Math.min(180, ta.scrollHeight) + "px"; };
+  ta.addEventListener("input", grow);
+  const cancel = () => { editingMsg = null; drawThread(); };
+  const save = async () => {
+    const body = ta.value.trim(); if (!body) { ta.focus(); return; }
+    if (body === m.body) return cancel();
+    const { error } = await db.from("messages").update({ body }).eq("id", m.id);
+    if (error) return fail(error);
+    m.body = body; m.edited_at = new Date().toISOString(); editingMsg = null; drawThread(); loadConvs(); toast("Message edited ♡");
+  };
+  $(".eb-cancel", box).addEventListener("click", cancel); $(".eb-save", box).addEventListener("click", save);
+  ta.addEventListener("keydown", e => { if (e.key === "Escape") { e.stopPropagation(); cancel(); } else if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); save(); } });
+  setTimeout(() => { grow(); ta.focus(); ta.setSelectionRange(ta.value.length, ta.value.length); }, 0);
+  return box;
+}
 function drawThread(forceBottom) {
   const c = convs.find(x => x.id === openId), log = $("#threadLog");
   const atBottom = forceBottom || log.scrollHeight - log.scrollTop - log.clientHeight < 80;
@@ -735,38 +756,19 @@ function drawThread(forceBottom) {
   const lastAdmin = [...thread].reverse().find(m => m.sender === "admin");
   thread.forEach(m => {
     const mine = m.sender === "admin";
-    const row = document.createElement("div"); row.className = "brow " + (mine ? "me" : "them");
-    if (editingMsg === m.id) {
-      const box = document.createElement("div"); box.className = "edit-box";
-      box.innerHTML = `<textarea rows="3" maxlength="1000" aria-label="Edit message"></textarea><div class="row"><button class="btn small-btn" type="button">Save</button><button class="btn ghost small-btn" type="button">Cancel</button></div>`;
-      const ta = $("textarea", box); ta.value = m.body;
-      const [save, cancel] = $$("button", box);
-      cancel.addEventListener("click", () => { editingMsg = null; drawThread(); });
-      save.addEventListener("click", async () => {
-        const body = ta.value.trim(); if (!body) return toast("A message cannot be empty", true);
-        if (body === m.body) { editingMsg = null; return drawThread(); }
-        const { error } = await db.from("messages").update({ body }).eq("id", m.id);
-        if (error) return fail(error);
-        m.body = body; m.edited_at = new Date().toISOString(); editingMsg = null; drawThread(); loadConvs(); toast("Message edited ♡");
-      });
-      row.append(box); log.append(row); setTimeout(() => ta.focus(), 0); return;
-    }
-    const line = document.createElement("div"); line.className = "bline";
+    const row = document.createElement("div"); row.className = "brow " + (mine ? "me" : "them"); row.dataset.id = m.id;
+    if (editingMsg === m.id) { row.append(editBox(m)); log.append(row); return; }
     const b = document.createElement("div"); b.className = "bub " + (mine ? "me" : "them"); b.textContent = m.body;
+    b.tabIndex = 0; b.setAttribute("role", "button"); b.setAttribute("aria-label", "Message options");
     const s = document.createElement("small"); s.textContent = fmtTime(m.created_at) + (m.edited_at ? " · edited" : ""); b.append(s);
-    const acts = document.createElement("div"); acts.className = "bact";
-    const r = document.createElement("button"); r.type = "button"; r.className = "ic"; r.textContent = "😊"; r.setAttribute("aria-label", "React to this message");
-    r.addEventListener("click", () => openPop("react", m)); acts.append(r);
-    if (mine) {
-      const ed = document.createElement("button"); ed.type = "button"; ed.className = "ic"; ed.textContent = "✏️"; ed.setAttribute("aria-label", "Edit this message");
-      ed.addEventListener("click", () => { editingMsg = m.id; drawThread(); }); acts.append(ed);
-    }
-    line.append(...(mine ? [acts, b] : [b, acts])); row.append(line);
+    const pick = () => openMenu(m, b);
+    b.addEventListener("click", pick); b.addEventListener("keydown", e => { if (e.key === "Enter") pick(); });
+    row.append(b);
     if (m.reactions && m.reactions.length) {
       const rr = document.createElement("div"); rr.className = "reacts";
       m.reactions.forEach(x => {
         const ch = document.createElement("button"); ch.type = "button"; ch.className = "rx" + (x.side === "admin" ? " mine" : ""); ch.textContent = x.emoji;
-        ch.setAttribute("aria-label", "Reaction " + x.emoji); ch.addEventListener("click", () => openPop("react", m)); rr.append(ch);
+        ch.setAttribute("aria-label", "Reaction " + x.emoji); ch.addEventListener("click", pick); rr.append(ch);
       });
       row.append(rr);
     }
@@ -817,44 +819,56 @@ $("#replyForm").addEventListener("submit", async e => {
   drawThread(true); loadConvs();
 });
 
-/* emoji: put one in your reply, or react to any message with any emoji */
-const EMOJIS = ["😀","😂","🥹","😍","🥰","😘","😊","😉","😎","🤩","🥳","😭","😢","😡","😴","🤔","🙄","😇","🤗","😋",
-                "❤️","🧡","💛","💚","💙","💜","🖤","🤍","💖","💕","💞","💘","✨","🌸","🌹","🔥","🎉","🎂","🎁","🎈",
-                "👍","👎","👏","🙌","🙏","💪","👌","✌️","🤞","👋","😅","🫶","💯","⭐","🌙","☀️"];
+/* tap a message: react with a quick emoji or ANY emoji from your keyboard, edit your own message, copy it */
 const QUICK = ["❤️","😂","😍","👍","😮","😢"];
 const isEmoji = s => /\p{Extended_Pictographic}/u.test(s) && [...s].length <= 8;
-function openPop(mode, msg) {
-  const pop = $("#emoPop"); popFor = { mode, msg }; pop.textContent = "";
-  const h = document.createElement("p"); h.className = "emo-h"; h.textContent = mode === "react" ? "React with any emoji" : "Add an emoji"; pop.append(h);
-  const btn = e => { const b = document.createElement("button"); b.type = "button"; b.textContent = e; b.setAttribute("aria-label", e); b.addEventListener("click", () => pickEmoji(e)); return b; };
-  if (mode === "react") { const q = document.createElement("div"); q.className = "emo-quick"; QUICK.forEach(e => q.append(btn(e))); pop.append(q); }
-  const g = document.createElement("div"); g.className = "emo-grid"; EMOJIS.forEach(e => g.append(btn(e))); pop.append(g);
-  const r = document.createElement("div"); r.className = "emo-own";
-  r.innerHTML = '<input type="text" placeholder="Or type / paste any emoji" maxlength="16" aria-label="Any emoji"><button type="button" class="btn small-btn">Add</button>';
-  const inp = $("input", r), add = () => { const v = inp.value.trim(); if (!isEmoji(v)) { inp.value = ""; inp.placeholder = "That is not an emoji, try again"; return; } pickEmoji(v); };
-  $("button", r).addEventListener("click", add); inp.addEventListener("keydown", e => { if (e.key === "Enter") { e.preventDefault(); add(); } });
-  pop.append(r);
-  if (mode === "react" && msg && (msg.reactions || []).some(x => x.side === "admin")) {
-    const rm = document.createElement("button"); rm.type = "button"; rm.className = "emo-rm"; rm.textContent = "Remove my reaction"; rm.addEventListener("click", () => pickEmoji("")); pop.append(rm);
-  }
-  pop.hidden = false;
+const oneSymbol = s => (window.Intl && Intl.Segmenter) ? [...new Intl.Segmenter().segment(s)].length === 1 : [...s].length === 1;
+const myReaction = m => ((m.reactions || []).find(x => x.side === "admin") || {}).emoji || "";
+function closePop() { const p = $("#emoPop"); p.hidden = true; p.textContent = ""; popFor = null; }
+function placeMenu(anchor) {
+  const menu = $("#emoPop"), c = $("#thread").getBoundingClientRect(), a = anchor.getBoundingClientRect(), mw = menu.offsetWidth, mh = menu.offsetHeight;
+  let top = a.top - c.top - mh - 8; if (top < 64) top = a.bottom - c.top + 8;
+  top = Math.max(64, Math.min(top, c.height - mh - 100));
+  let left = a.left - c.left + (a.width - mw) / 2; left = Math.max(8, Math.min(c.width - mw - 8, left));
+  menu.style.top = top + "px"; menu.style.left = left + "px";
 }
-function closePop() { $("#emoPop").hidden = true; popFor = null; }
-async function pickEmoji(e) {
-  const p = popFor; if (!p) return;
-  if (p.mode === "insert") {
-    const t = $("#replyText"), s = t.selectionStart ?? t.value.length, en = t.selectionEnd ?? s;
-    t.value = t.value.slice(0, s) + e + t.value.slice(en); t.focus(); t.selectionStart = t.selectionEnd = s + e.length; closePop(); return;
+function openMenu(m, anchor) {
+  const menu = $("#emoPop"); closePop(); popFor = m; menu.textContent = "";
+  const q = document.createElement("div"); q.className = "mm-quick";
+  QUICK.forEach(e => {
+    const b = document.createElement("button"); b.type = "button"; b.textContent = e; b.setAttribute("aria-label", "React " + e);
+    if (myReaction(m) === e) b.classList.add("on"); b.addEventListener("click", () => react(m, e)); q.append(b);
+  });
+  const plus = document.createElement("button"); plus.type = "button"; plus.className = "mm-plus"; plus.textContent = "+"; plus.setAttribute("aria-label", "More emojis from your keyboard");
+  q.append(plus); menu.append(q);
+  const own = document.createElement("div"); own.className = "mm-own"; own.hidden = true;
+  own.innerHTML = '<input type="text" placeholder="Open your emoji keyboard 😊" maxlength="16" aria-label="Type any emoji" autocomplete="off"><button type="button">React</button>';
+  const inp = $("input", own), add = () => { const v = inp.value.trim(); if (!isEmoji(v)) { inp.value = ""; inp.placeholder = "Please pick an emoji 😊"; inp.focus(); return; } react(m, v); };
+  $("button", own).addEventListener("click", add);
+  inp.addEventListener("keydown", e => { if (e.key === "Enter") { e.preventDefault(); add(); } });
+  inp.addEventListener("input", () => { const v = inp.value.trim(); if (v && isEmoji(v) && oneSymbol(v)) add(); });
+  menu.append(own);
+  plus.addEventListener("click", () => { own.hidden = !own.hidden; if (!own.hidden) { inp.focus(); placeMenu(anchor); } });
+  const acts = document.createElement("div"); acts.className = "mm-acts";
+  if (m.sender === "admin") {
+    const ed = document.createElement("button"); ed.type = "button"; ed.textContent = "✏️  Edit"; ed.addEventListener("click", () => { closePop(); editingMsg = m.id; drawThread(); }); acts.append(ed);
   }
-  const m = p.msg; closePop();
-  m.reactions = (m.reactions || []).filter(x => x.side !== "admin"); if (e) m.reactions.push({ message_id: m.id, side: "admin", emoji: e });
+  const cp = document.createElement("button"); cp.type = "button"; cp.textContent = "📋  Copy";
+  cp.addEventListener("click", async () => { try { await navigator.clipboard.writeText(m.body); toast("Copied"); } catch (e) { toast("Could not copy", true); } closePop(); });
+  acts.append(cp); menu.append(acts);
+  menu._anchor = anchor; menu.hidden = false; placeMenu(anchor);
+}
+async function react(m, e) {
+  closePop();
+  const next = myReaction(m) === e ? "" : e;                      // tap the same one again to remove it
+  m.reactions = (m.reactions || []).filter(x => x.side !== "admin"); if (next) m.reactions.push({ message_id: m.id, side: "admin", emoji: next });
   drawThread();
-  const { error } = e ? await db.from("message_reactions").upsert({ message_id: m.id, side: "admin", emoji: e }, { onConflict: "message_id,side" })
-                      : await db.from("message_reactions").delete().eq("message_id", m.id).eq("side", "admin");
+  const { error } = next ? await db.from("message_reactions").upsert({ message_id: m.id, side: "admin", emoji: next }, { onConflict: "message_id,side" })
+                         : await db.from("message_reactions").delete().eq("message_id", m.id).eq("side", "admin");
   if (error) { fail(error); loadReactions().then(() => drawThread()); }
 }
-$("#replyEmo").addEventListener("click", () => { $("#emoPop").hidden ? openPop("insert") : closePop(); });
-document.addEventListener("pointerdown", e => { if (!$("#emoPop").hidden && !e.target.closest("#emoPop, #replyEmo, .bact")) closePop(); });
+document.addEventListener("pointerdown", e => { if (!$("#emoPop").hidden && !e.target.closest("#emoPop, .bub, .rx")) closePop(); });
+$("#threadLog").addEventListener("scroll", () => { const m = $("#emoPop"); if (!m.hidden && m._anchor && m._anchor.isConnected) placeMenu(m._anchor); else if (!m.hidden) closePop(); }, { passive: true });
 
 function startRealtime() {
   if (rt) return;
@@ -874,6 +888,11 @@ function startRealtime() {
           db.from("messages").update({ read: true }).eq("id", m.id).then(() => loadConvs());
         }
       } else if (openId === m.conversation_id && !thread.some(x => x.id === m.id)) { thread.push({ ...m, reactions: [] }); drawThread(); }
+    })
+    .on("postgres_changes", { event: "UPDATE", schema: "public", table: "messages" }, p => {
+      const m = thread.find(x => x.id === p.new.id);
+      if (m && editingMsg !== m.id) { Object.assign(m, { body: p.new.body, edited_at: p.new.edited_at, read: p.new.read, read_at: p.new.read_at }); drawThread(); }
+      if (p.new.conversation_id) loadConvs();
     })
     .on("postgres_changes", { event: "UPDATE", schema: "public", table: "conversations" }, p => {
       const c = convs.find(x => x.id === p.new.id); if (!c) { loadConvs(); return; }

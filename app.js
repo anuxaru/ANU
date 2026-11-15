@@ -619,35 +619,50 @@ if (!RM && matchMedia("(hover:hover) and (pointer:fine)").matches){
   });
 })();
 
-/* ================= SLIDE TO GO BACK UP (bottom of the page) ================= */
+/* ================= SLIDE TO GO BACK UP (bottom of the page) =================
+   Drag the round button to the right end, or just tap it. The scroll is animated by the page itself
+   (not the browser's smooth-scroll), so it always reaches the top, however long the page is. */
 (() => {
   const bar = $("#backtop"), h = $("#upHandle"); if (!bar || !h) return;
-  if (window.ANU_ICONS) $("#upIco").style.setProperty("--i", 'url("' + ANU_ICONS.url("up") + '")');
-  let drag = null, max = 0, busy = false;
-  const measure = () => { max = Math.max(0, bar.clientWidth - h.offsetWidth - 10); };
+  let drag = null, max = 0, busy = false, handled = 0;
+  const measure = () => { max = Math.max(0, bar.clientWidth - h.offsetWidth - 12); };
   const setX = x => { h.style.transform = `translateX(${x}px)`; bar.style.setProperty("--p", max ? (x / max).toFixed(3) : "0"); };
+  const jump = y => window.scrollTo({ top: y, left: 0, behavior: "instant" });
   function toTop(){
-    if (busy) return; busy = true; h.style.transition = "transform .35s cubic-bezier(.2,.8,.2,1)"; setX(max);
-    scrollTo({top:0, behavior: RM ? "auto" : "smooth"});
-    setTimeout(() => { h.style.transition = "transform .6s ease"; setX(0); busy = false; }, RM ? 150 : 1300);
+    if (busy) return; busy = true; measure();
+    h.style.transition = "transform .3s cubic-bezier(.2,.8,.2,1)"; setX(max);
+    const y0 = window.scrollY, t0 = performance.now(), dur = RM ? 1 : Math.min(1400, 500 + y0 / 6);
+    (function step(now){
+      const k = Math.min(1, (now - t0) / dur), e = k < .5 ? 2 * k * k : 1 - Math.pow(-2 * k + 2, 2) / 2;   // ease in-out
+      jump(Math.round(y0 * (1 - e)));
+      if (k < 1) requestAnimationFrame(step);
+      else { jump(0); setTimeout(() => { h.style.transition = "transform .5s ease"; setX(0); busy = false; }, 350); }
+    })(t0);
   }
-  h.addEventListener("pointerdown", e => {
-    if (busy) return; measure(); drag = {x:e.clientX, moved:false}; h.style.transition = "none";
-    try { h.setPointerCapture(e.pointerId); } catch (err) { /* ignore */ }
-  });
-  h.addEventListener("pointermove", e => {
+  const onMove = e => {
     if (!drag) return;
     const dx = e.clientX - drag.x;
     if (Math.abs(dx) > 6) drag.moved = true;
     if (drag.moved) setX(Math.max(0, Math.min(max, dx)));
-  });
-  h.addEventListener("pointerup", () => {
+  };
+  const onEnd = () => {
     if (!drag) return; const d = drag; drag = null;
+    removeEventListener("pointermove", onMove); removeEventListener("pointerup", onEnd); removeEventListener("pointercancel", onCancel);
+    handled = Date.now();
     const p = +bar.style.getPropertyValue("--p") || 0;
-    if (!d.moved || p > .82) toTop(); else { h.style.transition = "transform .35s ease"; setX(0); }   // a tap or a full slide goes up
+    if (!d.moved || p > .8) toTop(); else { h.style.transition = "transform .35s ease"; setX(0); }   // a tap or a full slide goes up
+  };
+  const onCancel = () => {
+    if (!drag) return; drag = null;
+    removeEventListener("pointermove", onMove); removeEventListener("pointerup", onEnd); removeEventListener("pointercancel", onCancel);
+    h.style.transition = "transform .35s ease"; setX(0);
+  };
+  h.addEventListener("pointerdown", e => {
+    if (busy || (e.pointerType === "mouse" && e.button !== 0)) return;
+    measure(); drag = { x: e.clientX, moved: false }; h.style.transition = "none";
+    addEventListener("pointermove", onMove); addEventListener("pointerup", onEnd); addEventListener("pointercancel", onCancel);   // listen on the window, so a fast drag never loses the button
   });
-  h.addEventListener("pointercancel", () => { drag = null; h.style.transition = "transform .35s ease"; setX(0); });
-  h.addEventListener("keydown", e => { if (e.key === "Enter" || e.key === " "){ e.preventDefault(); measure(); toTop(); } });
+  h.addEventListener("click", () => { if (Date.now() - handled > 400) toTop(); });       // fallback: keyboard / assistive tech / odd browsers
   addEventListener("resize", measure); measure();
 })();
 

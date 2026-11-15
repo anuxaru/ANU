@@ -399,17 +399,37 @@ footer{position:relative;z-index:2;text-align:center;color:var(--soft);font-size
 .rx{border:1px solid var(--line);background:var(--card);border-radius:99px;padding:1px 8px;font-size:1rem;line-height:1.5;min-height:28px}
 .rx.mine{border-color:var(--rose);background:var(--blush)}
 .seen{font-size:.7rem;color:var(--soft)}
-.chat-emo{border:0;background:var(--blush);border-radius:50%;width:44px;height:44px;flex:none;font-size:1.25rem}
-.emo-pop{position:absolute;left:10px;right:10px;bottom:132px;z-index:5;background:var(--card);border:1px solid var(--line);border-radius:18px;
-  box-shadow:var(--shadow2);padding:10px;max-height:min(300px,45vh);overflow-y:auto}
-.emo-pop[hidden]{display:none}
-.emo-h{margin:0 0 6px;font:600 .8rem var(--sans);letter-spacing:.06em;text-transform:uppercase;color:var(--soft)}
-.emo-quick{display:flex;gap:6px;margin-bottom:8px}
-.emo-quick button{flex:1;font-size:1.4rem;background:var(--blush);border:0;border-radius:12px;min-height:44px}
-.emo-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(38px,1fr));gap:2px}
-.emo-grid button{border:0;background:none;font-size:1.4rem;min-height:38px;border-radius:10px}
-.emo-grid button:hover,.emo-grid button:active{background:var(--blush)}
-.emo-own{display:flex;gap:6px;margin-top:8px}
-.emo-own input{flex:1;border:1px solid var(--line);border-radius:12px;padding:8px 10px;background:var(--bg);color:var(--ink);font:400 16px var(--sans);min-width:0}
-.emo-own button{border:0;background:var(--rose);color:#fff;border-radius:12px;padding:0 14px;font-weight:500}
-.emo-rm{display:block;width:100%;margin-top:8px;border:1px solid var(--line);background:none;border-radius:12px;padding:8px;color:var(--soft)}
+
+/* ============ SLIDE-UP BAR v2 ============ */
+.uptrack{height:66px;background:linear-gradient(180deg,color-mix(in srgb,var(--card) 94%,transparent),color-mix(in srgb,var(--bg2) 75%,transparent));
+  box-shadow:inset 0 2px 8px rgba(0,0,0,.18),var(--shadow)}
+.up-handle{left:7px;top:7px;width:52px;height:52px;background:linear-gradient(145deg,var(--rose2),var(--rose));color:#fff;padding:0;
+  box-shadow:0 8px 20px color-mix(in srgb,var(--rose) 50%,transparent),inset 0 1px 0 rgba(255,255,255,.35)}
+.up-handle svg{display:block;width:24px;height:24px;flex:none;animation:upnudge 2.2s ease-in-out infinite}
+.up-text{padding-left:62px}
+.chat-fab svg{display:block;width:28px;height:28px}
+
+/* ============ CHAT: tap a message ============ */
+.msg-menu{position:absolute;z-index:7;width:max-content;max-width:calc(100% - 16px);background:var(--card);color:var(--ink);border:1px solid var(--line);
+  border-radius:22px;box-shadow:var(--shadow2);padding:8px;animation:chatin .15s ease}
+.msg-menu[hidden]{display:none}
+.mm-quick{display:flex;gap:2px;align-items:center}
+.mm-quick button{width:40px;height:40px;border:0;background:none;border-radius:50%;font-size:1.5rem;line-height:1;display:grid;place-items:center;transition:transform .15s,background .15s}
+.mm-quick button:hover{background:var(--blush);transform:scale(1.18)}
+.mm-quick button.on{background:var(--blush);box-shadow:inset 0 0 0 2px var(--rose)}
+.mm-quick .mm-plus{background:var(--blush);color:var(--soft);font:600 1.4rem/1 var(--sans)}
+.mm-own{display:flex;gap:6px;margin-top:6px}.mm-own[hidden]{display:none}
+.mm-own input{flex:1;min-width:0;border:1px solid var(--line);border-radius:12px;padding:9px 10px;background:var(--bg);color:var(--ink);font:400 16px var(--sans)}
+.mm-own button{border:0;background:var(--rose);color:#fff;border-radius:12px;padding:0 12px;font-weight:500}
+.mm-acts{display:flex;flex-direction:column;margin-top:4px;border-top:1px solid var(--line);padding-top:4px}
+.mm-acts button{border:0;background:none;text-align:left;padding:10px 8px;border-radius:10px;color:var(--ink);font:500 .92rem var(--sans);white-space:pre}
+.mm-acts button:hover{background:var(--blush)}
+.edit-box{background:var(--card);border:1.5px solid var(--rose);border-radius:18px;padding:10px;width:min(290px,100%)}
+.edit-h{margin:0 0 6px;font:600 .7rem var(--sans);letter-spacing:.08em;text-transform:uppercase;color:var(--soft)}
+.edit-box textarea{display:block;width:100%;border:1px solid var(--line);border-radius:12px;padding:8px 10px;background:var(--bg);color:var(--ink);
+  font:400 16px/1.4 var(--sans);resize:none;min-height:46px;margin:0}
+.edit-row{display:flex;gap:8px;justify-content:flex-end;margin-top:8px}
+.edit-row button{border:0;border-radius:99px;padding:8px 16px;font-weight:500;font-size:.9rem}
+.eb-cancel{background:var(--blush);color:var(--ink)}.eb-save{background:var(--rose);color:#fff}
+
+footer{padding-bottom:calc(92px + env(safe-area-inset-bottom))}
